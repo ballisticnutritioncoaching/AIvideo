@@ -10,6 +10,8 @@ import {
   inFromCm,
   lbFromKg,
   needsGoalWeight,
+  paceEstimate,
+  pacesFor,
   SPLITS,
   TRAINING,
   type Goal,
@@ -30,7 +32,7 @@ export default function MacrosPage() {
   const [step, setStep] = useState(m.complete ? -1 : 0); // -1 = results
 
   const askGoalWeight = !!(m.weightLb && m.heightIn && needsGoalWeight(m.weightLb, m.heightIn) && m.goal !== "build");
-  const steps = ["about", "goal", "daily", "training", ...(askGoalWeight ? ["goalWeight"] : []), "meals"] as const;
+  const steps = ["about", "goal", "daily", "training", ...(m.goal === "lose" ? ["pace"] : []), ...(askGoalWeight ? ["goalWeight"] : []), "meals"] as const;
   const input = toInput(m);
   const result = m.complete && input ? calculate(input) : null;
   const key = step >= 0 || !result ? steps[Math.min(Math.max(step, 0), steps.length - 1)] : null;
@@ -65,6 +67,7 @@ export default function MacrosPage() {
           <Choice title="What do your workouts look like each week?" options={TRAINING.map((d, i) => ({ value: i, label: d.label, desc: d.desc, tag: i === 2 ? "Most members" : undefined }))}
             value={m.training} onPick={(training) => { set({ training }); next(); }} />
         )}
+        {key === "pace" && <PaceStep m={m} set={set} onNext={next} />}
         {key === "goalWeight" && <GoalWeight m={m} set={set} onNext={next} />}
         {key === "meals" && <MealsTracking m={m} set={set} onNext={next} />}
         {step > 0 && (
@@ -78,7 +81,7 @@ export default function MacrosPage() {
 function toInput(m: MacroInputs): MacroInput | null {
   if (!m.sex || !m.age || !m.heightIn || !m.weightLb || !m.goal || m.daily === undefined || m.training === undefined) return null;
   return { sex: m.sex, age: m.age, heightIn: m.heightIn, weightLb: m.weightLb, goal: m.goal, daily: m.daily, training: m.training,
-    goalWeightLb: m.goalWeightLb, proteinPerLb: m.proteinPerLb, split: m.split, meals: m.meals };
+    goalWeightLb: m.goalWeightLb, rate: m.rate, proteinPerLb: m.proteinPerLb, split: m.split, meals: m.meals };
 }
 
 /* ---------- Steps ---------- */
@@ -171,6 +174,52 @@ function Choice<T extends string | number>({ title, options, value, onPick }: {
   );
 }
 
+/** Personal pace options: each shows that person's own estimated lbs/week. */
+function PaceOptions({ m, value, onPick, compact = false }: { m: MacroInputs; value?: number; onPick: (rate: number) => void; compact?: boolean }) {
+  const base = toInput({ ...m, goal: "lose", rate: 0.1 });
+  const r = base ? calculate(base) : null;
+  if (!base || !r) return null;
+  const maintenanceRaw = r.bmr * r.activity;
+  return (
+    <div className="option-list">
+      {pacesFor(r.bmi).map((p) => {
+        const e = paceEstimate(maintenanceRaw, p.rate, base.weightLb, r.bmr);
+        const fast = e.pctPerWeek > 1 || e.deficit > 500;
+        return (
+          <button key={p.rate} type="button" className={`option ${value === p.rate ? "on" : ""}`} onClick={() => onPick(p.rate)}>
+            <span className="option-title">
+              {p.label}: about {e.lbPerWeek} lb a week
+              {p.rate === 0.15 && <span className="pill outline" style={{ marginLeft: 8 }}>Recommended</span>}
+            </span>
+            {!compact && <span className="small muted">{p.desc}</span>}
+            <span className="small muted">
+              {Math.round(p.rate * 100)}% under maintenance ({e.deficit} cal a day) · {e.pctPerWeek}% of your bodyweight a week
+            </span>
+            {fast && !compact && (
+              <span className="small pace-warn">
+                {e.pctPerWeek > 1 ? "Faster than the 0.5-1% a week that research favors for keeping muscle." : "Over about 500 calories a day, where keeping muscle gets harder."}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function PaceStep({ m, set, onNext }: { m: MacroInputs; set: (p: Partial<MacroInputs>) => void; onNext: () => void }) {
+  return (
+    <div className="stack">
+      <h2>How fast do you want to lose?</h2>
+      <p className="small muted" style={{ margin: 0 }}>
+        Slower loss keeps more muscle and is easier to live with. These estimates are for your first few weeks; loss
+        naturally slows as you go.
+      </p>
+      <PaceOptions m={m} value={m.rate} onPick={(rate) => { set({ rate }); onNext(); }} />
+    </div>
+  );
+}
+
 function GoalWeight({ m, set, onNext }: { m: MacroInputs; set: (p: Partial<MacroInputs>) => void; onNext: () => void }) {
   const metric = m.units === "metric";
   const [v, setV] = useState(m.goalWeightLb ? String(metric ? Math.round(m.goalWeightLb * 0.4536) : Math.round(m.goalWeightLb)) : "");
@@ -218,10 +267,16 @@ function MealsTracking({ m, set, onNext }: { m: MacroInputs; set: (p: Partial<Ma
 /* ---------- Results ---------- */
 
 const fmt = (n: number) => n.toLocaleString();
+const GOAL_PHRASE: Record<Goal, string> = {
+  lose: "losing fat",
+  maintain: "maintaining while you get stronger",
+  build: "building muscle",
+  reverse: "coming off a diet",
+  pregnant: "fueling pregnancy or breastfeeding",
+};
 const perMeal = (p: Portion) => (p.perMealLow === p.perMealHigh ? `${p.perMealLow}` : `${p.perMealLow} or ${p.perMealHigh}`);
 
 function Results({ m, input, r, set, edit }: { m: MacroInputs; input: MacroInput; r: MacroResult; set: (p: Partial<MacroInputs>) => void; edit: () => void }) {
-  const goal = GOALS[input.goal];
   const tracking = m.tracking ?? "none";
   const hands = <HandPortions r={r} meals={input.meals} />;
   const grams = <Grams r={r} tracking={tracking} />;
@@ -232,8 +287,8 @@ function Results({ m, input, r, set, edit }: { m: MacroInputs; input: MacroInput
         <p className="label">Your starting numbers</p>
         <h1>{fmt(r.calories)} calories a day</h1>
         <p className="lede">
-          At your size and activity, your goal of <strong>{goal.label.toLowerCase()}</strong> needs about {fmt(r.calories)} calories a day.
-          {input.goal === "lose" && ` That's about 20% under your maintenance of ${fmt(r.maintenance)}.`}
+          At your size and activity, <strong>{GOAL_PHRASE[input.goal]}</strong> takes about {fmt(r.calories)} calories a day.
+          {input.goal === "lose" && r.pace && ` That's ${Math.round(r.rate * 100)}% under your maintenance of ${fmt(r.maintenance)}, for about ${r.pace.lbPerWeek} lb a week at first.`}
           {input.goal === "build" && ` That's about 10% over your maintenance of ${fmt(r.maintenance)}.`}
         </p>
       </div>
@@ -253,6 +308,12 @@ function Results({ m, input, r, set, edit }: { m: MacroInputs; input: MacroInput
 
       <section className="card stack">
         <h3>Fine-tune</h3>
+        {input.goal === "lose" && (
+          <div className="field">
+            <label>Pace</label>
+            <PaceOptions m={m} value={r.rate} onPick={(rate) => set({ rate })} compact />
+          </div>
+        )}
         <div className="field">
           <label>Carbs and fat</label>
           <div className="seg" role="group" aria-label="Carbs and fat">
@@ -289,7 +350,7 @@ function Results({ m, input, r, set, edit }: { m: MacroInputs; input: MacroInput
         <ol className="small">
           <li><strong>Resting burn: {fmt(r.bmr)} calories.</strong> The Mifflin-St Jeor formula, from your age, height, weight and sex.</li>
           <li><strong>Maintenance: {fmt(r.maintenance)} calories.</strong> Resting burn × {r.activity.toFixed(2)} for your daily activity ({DAILY[input.daily].label.toLowerCase()}) plus your workouts ({TRAINING[input.training].label.toLowerCase()}).</li>
-          <li><strong>Your target: {fmt(r.calories)} calories.</strong> {input.goal === "lose" ? "Maintenance minus about 20%, never below your resting burn." : input.goal === "build" ? "Maintenance plus about 10%." : "Maintenance."}</li>
+          <li><strong>Your target: {fmt(r.calories)} calories.</strong> {input.goal === "lose" ? `Maintenance minus ${Math.round(r.rate * 100)}% for your pace, never below your resting burn. That's a ${r.pace?.deficit} calorie a day deficit, about ${r.pace?.lbPerWeek} lb a week at first (3,500 calories ≈ 1 lb; real loss slows over time).` : input.goal === "build" ? "Maintenance plus about 10%." : "Maintenance."}</li>
           <li><strong>Protein: {r.protein} g.</strong> {r.proteinPerLb.toFixed(1)} g × {Math.round(r.proteinBasisLb)} lb {r.usedGoalWeight ? `(your goal weight, since your BMI is ${r.bmi})` : "(your bodyweight)"}. That&apos;s {r.protein * 4} calories.</li>
           <li><strong>Carbs and fat split the rest.</strong> {fmt(r.calories - r.protein * 4)} calories left, split {Math.round(SPLITS[input.split].carbShare * 100)}% carbs and {Math.round((1 - SPLITS[input.split].carbShare) * 100)}% fat: <strong>{r.carbs} g carbs</strong> ({r.carbs * 4} cal) and <strong>{r.fat} g fat</strong> ({r.fat * 9} cal).{r.fatFloorApplied && ` Fat was raised to the minimum of ${FAT_FLOOR_PER_LB} g per lb for hormone health.`}</li>
           <li><strong>Hand portions:</strong> 1 palm ≈ {r.hand.palm} g protein, 1 cupped hand ≈ {r.hand.cupped} g carbs, 1 thumb ≈ {r.hand.thumb} g fat.</li>

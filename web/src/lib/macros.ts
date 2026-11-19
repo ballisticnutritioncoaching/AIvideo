@@ -4,6 +4,8 @@
 // Carbs and fat: split the calories left after protein (balanced 50/50 by default).
 // Hand portions convert grams into palms, cupped hands and thumbs.
 
+const DEFAULT_RATE_CONST = 0.15;
+
 export type Sex = "male" | "female";
 export type Goal = "lose" | "maintain" | "build" | "reverse" | "pregnant";
 export type Split = "balanced" | "more-carb" | "less-carb";
@@ -18,6 +20,7 @@ export interface MacroInput {
   daily: number; // 0-3, activity outside workouts
   training: number; // 0-4, weekly exercise
   goalWeightLb?: number; // used when BMI >= 25
+  rate?: number; // fat-loss deficit as a fraction of maintenance (0.10-0.25)
   proteinPerLb?: number; // override, 0.7-1.0
   split: Split;
   meals: number; // 3-6
@@ -39,12 +42,35 @@ export const TRAINING = [
 ];
 
 export const GOALS: Record<Goal, { label: string; desc: string; calorieFactor: number; proteinPerLb: number }> = {
-  lose: { label: "Lose fat", desc: "Eat about 20% under maintenance, on purpose, for a set phase.", calorieFactor: 0.8, proteinPerLb: 1.0 },
+  lose: { label: "Lose fat", desc: "Eat under maintenance, on purpose, for a set phase. You'll pick the pace.", calorieFactor: 1 - DEFAULT_RATE_CONST, proteinPerLb: 1.0 },
   maintain: { label: "Maintain and get stronger", desc: "Stay about the same weight while you build strength and habits.", calorieFactor: 1.0, proteinPerLb: 0.9 },
   build: { label: "Build muscle", desc: "Eat a little over maintenance to gain muscle slowly.", calorieFactor: 1.1, proteinPerLb: 0.8 },
   reverse: { label: "Coming off a diet", desc: "Add food back slowly until you reach maintenance.", calorieFactor: 1.0, proteinPerLb: 0.9 },
   pregnant: { label: "Pregnant or breastfeeding", desc: "No deficit. Eat at maintenance or above.", calorieFactor: 1.0, proteinPerLb: 0.9 },
 };
+
+/**
+ * Fat-loss pace. Evidence: slower loss (~0.5-1% of bodyweight a week) better protects lean mass and RMR
+ * (Garthe 2011 RCT; Ashtary-Larky 2020 meta-analysis; Helms 2014 review), and deficits over ~500 kcal/day
+ * blunt lean-mass gains with lifting (Murphy & Koehler 2022 meta-analysis).
+ */
+export const PACES = [
+  { rate: 0.1, label: "Gentle", desc: "Easiest to stick with. Best for protecting muscle, energy and sleep." },
+  { rate: 0.15, label: "Steady", desc: "Realistic for most parents. Noticeable progress without feeling starved." },
+  { rate: 0.2, label: "Faster", desc: "Harder to sustain. Expect more hunger, and keep phases short." },
+  { rate: 0.25, label: "Aggressive", desc: "Short phases only. More muscle loss risk; only offered with more to lose." },
+] as const;
+export const DEFAULT_RATE = DEFAULT_RATE_CONST;
+/** Aggressive pace is only offered when BMI is 25 or higher */
+export const pacesFor = (bmi: number) => PACES.filter((p) => p.rate < 0.25 || bmi >= 25);
+
+/** Estimated early weekly loss: deficit x 7 / 3,500 kcal per lb (loss slows over time, Hall 2011). */
+export function paceEstimate(maintenance: number, rate: number, weightLb: number, bmr: number) {
+  const target = Math.max(maintenance * (1 - rate), bmr);
+  const deficit = maintenance - target;
+  const lbPerWeek = (deficit * 7) / 3500;
+  return { deficit: Math.round(deficit), lbPerWeek: Math.round(lbPerWeek * 10) / 10, pctPerWeek: Math.round((lbPerWeek / weightLb) * 1000) / 10 };
+}
 
 export const SPLITS: Record<Split, { label: string; carbShare: number }> = {
   balanced: { label: "Balanced", carbShare: 0.5 },
@@ -80,6 +106,8 @@ const portion = (grams: number, per: number, meals: number): Portion => {
 export interface MacroResult {
   bmr: number;
   activity: number;
+  rate: number;
+  pace: { deficit: number; lbPerWeek: number; pctPerWeek: number } | null;
   maintenance: number;
   calories: number;
   bmi: number;
@@ -103,8 +131,11 @@ export function calculate(i: MacroInput): MacroResult | null {
   const activity = DAILY[i.daily].factor + TRAINING[i.training].add;
   const maintenance = round50(bmr * activity);
   const goal = GOALS[i.goal];
+  const rate = i.goal === "lose" ? Math.min(0.25, Math.max(0.1, i.rate ?? DEFAULT_RATE)) : 0;
+  const factor = i.goal === "lose" ? 1 - rate : goal.calorieFactor;
   // A fat-loss target never goes below resting burn
-  const calories = round50(Math.max(bmr * activity * goal.calorieFactor, goal.calorieFactor < 1 ? bmr : 0));
+  const calories = round50(Math.max(bmr * activity * factor, factor < 1 ? bmr : 0));
+  const pace = i.goal === "lose" ? paceEstimate(bmr * activity, rate, i.weightLb, bmr) : null;
 
   const bmi = bmiOf(i.weightLb, i.heightIn);
   const usedGoalWeight = bmi >= 25 && !!i.goalWeightLb && i.goalWeightLb < i.weightLb;
@@ -126,6 +157,8 @@ export function calculate(i: MacroInput): MacroResult | null {
   return {
     bmr: Math.round(bmr),
     activity,
+    rate,
+    pace,
     maintenance,
     calories,
     bmi: Math.round(bmi * 10) / 10,

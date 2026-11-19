@@ -330,3 +330,4 @@ html { scroll-padding-bottom: 170px; }
 details.how summary { cursor: pointer; color: var(--blue); }
 details.how ol { margin: 12px 0 0; padding-left: 20px; }
 details.how li { margin-bottom: 8px; }
+.pace-warn { color: var(--deep-red); }

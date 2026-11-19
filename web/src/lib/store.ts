@@ -33,6 +33,7 @@ export interface MacroInputs {
   daily?: number;
   training?: number;
   goalWeightLb?: number;
+  rate?: number;
   proteinPerLb?: number;
   split: "balanced" | "more-carb" | "less-carb";
   meals: number;
