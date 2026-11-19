@@ -294,3 +294,7 @@ button.version-card:hover { border-color: #9aa6dc; }
 html { scroll-padding-bottom: 170px; }
 @media (min-width: 820px) { html { scroll-padding-bottom: 100px; } }
 .session-done { margin-bottom: 96px; }
+
+/* Wordmark sizing. Clearspace comes from the surrounding header padding. */
+.logo img { height: 26px; width: auto; }
+@media (min-width: 720px) { .logo img { height: 30px; } }

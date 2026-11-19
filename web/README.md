@@ -32,4 +32,4 @@ Right now there's no real login or payment. Checkout creates a demo account, and
 
 ## Brand files still needed
 
-- The full BALLISTIC PERFORMANCE wordmark (SVG preferred). Until then the header uses the BP mark with the name set in Tomorrow. Swap it in `src/components/Brand.tsx`.
+- None. The wordmark was supplied as artwork and traced to SVG (`public/brand/wordmark-*.svg`). If you have the original vector file, drop it in with the same names.

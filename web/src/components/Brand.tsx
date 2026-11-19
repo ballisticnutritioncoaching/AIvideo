@@ -1,15 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 
-/** BP mark plus name. Swap in the full BALLISTIC PERFORMANCE wordmark file when it's supplied. */
+/** Full BALLISTIC PERFORMANCE wordmark (traced to SVG from the supplied artwork). */
 export function Logo({ light = false, href = "/" }: { light?: boolean; href?: string }) {
   return (
-    <Link href={href} className={`logo ${light ? "light" : ""}`} aria-label="Ballistic Performance home">
-      <img src={light ? "/brand/bp-mark-white.svg" : "/brand/bp-mark-performance-blue.svg"} alt="" width={34} height={25} />
-      <span className="logo-text">
-        <span>Ballistic</span>
-        <span>Performance</span>
-      </span>
+    <Link href={href} className="logo" aria-label="Ballistic Performance home">
+      <img
+        src={light ? "/brand/wordmark-white.svg" : "/brand/wordmark-performance-blue.svg"}
+        alt="Ballistic Performance"
+        width={2000}
+        height={363}
+      />
     </Link>
   );
 }
