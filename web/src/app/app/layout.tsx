@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Logo } from "@/components/Brand";
-import { useAppState } from "@/lib/store";
+import { MemberGate } from "@/components/MemberGate";
 
 const NAV = [
   { href: "/app", label: "Today", icon: "M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" },
@@ -14,17 +13,7 @@ const NAV = [
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const state = useAppState();
-  const router = useRouter();
   const path = usePathname();
-
-  useEffect(() => {
-    if (!state) return;
-    if (!state.account) router.replace("/");
-    else if (!state.profile) router.replace("/onboarding");
-  }, [state, router]);
-
-  const ready = state?.account && state.profile;
 
   return (
     <div className="app">
@@ -49,7 +38,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
       </header>
-      <main className="app-main">{ready ? children : <div className="wrap loading">Loading your program</div>}</main>
+      <main className="app-main">
+        <MemberGate needProfile>{children}</MemberGate>
+      </main>
       <nav className="tabbar" aria-label="Main">
         {NAV.map((n) => (
           <Link key={n.href} href={n.href} className={isActive(path, n.href) ? "active" : ""}>

@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { VersionPicker, DayPicker } from "@/components/Pickers";
-import { CONFIG } from "@/lib/config";
+import { signOut } from "@/lib/member";
 import { resetAll, update, useAppState } from "@/lib/store";
+import { remoteEnabled } from "@/lib/supabase";
 
 export default function SettingsPage() {
   const s = useAppState()!;
@@ -34,7 +35,15 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {CONFIG.demoMode && (
+      {remoteEnabled ? (
+        <section className="card stack">
+          <h3>Account</h3>
+          <p className="small">Your progress is saved to your account, so it follows you to any device you sign in on.</p>
+          <button type="button" className="btn small" onClick={() => signOut().then(() => router.push("/login"))}>
+            Sign out
+          </button>
+        </section>
+      ) : (
         <section className="card stack">
           <h3>Demo mode</h3>
           <p className="small">

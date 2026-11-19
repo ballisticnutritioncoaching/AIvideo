@@ -55,7 +55,15 @@ function read(): AppState {
   return cache!;
 }
 
-function write(next: AppState) {
+/** Called after each local change so it can be saved to the database (see lib/sync.ts). */
+type Saver = (prev: AppState, next: AppState) => void;
+let saver: Saver | null = null;
+export function setSaver(s: Saver | null) {
+  saver = s;
+}
+
+function write(next: AppState, persistRemote = true) {
+  const prev = cache ?? EMPTY;
   cache = next;
   try {
     window.localStorage.setItem(KEY, JSON.stringify(next));
@@ -63,14 +71,20 @@ function write(next: AppState) {
     // storage blocked (private mode): keep working in memory
   }
   listeners.forEach((l) => l());
+  if (persistRemote && saver) saver(prev, next);
 }
 
 export function update(fn: (s: AppState) => AppState) {
   write(fn(read()));
 }
 
+/** Replace local state with what the database holds, without writing it back. */
+export function hydrate(next: AppState) {
+  write(next, false);
+}
+
 export function resetAll() {
-  write(EMPTY);
+  write(EMPTY, false);
 }
 
 function subscribe(l: () => void) {

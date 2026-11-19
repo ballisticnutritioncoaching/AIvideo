@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Logo } from "@/components/Brand";
+import { MemberGate } from "@/components/MemberGate";
 import { DayPicker, VersionPicker } from "@/components/Pickers";
 import type { VersionId } from "@/data/types";
 import { update, useAppState } from "@/lib/store";
@@ -14,17 +15,21 @@ function nextMonday(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export default function Onboarding() {
+export default function OnboardingPage() {
+  return (
+    <MemberGate needProfile={false}>
+      <Onboarding />
+    </MemberGate>
+  );
+}
+
+function Onboarding() {
   const s = useAppState();
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [version, setVersion] = useState<VersionId | undefined>();
   const [days, setDays] = useState<number[]>([1, 2, 4, 6]);
   const [start, setStart] = useState(nextMonday);
-
-  useEffect(() => {
-    if (s && !s.account) router.replace("/checkout");
-  }, [s, router]);
 
   const finish = () => {
     if (!version || days.length !== 4) return;

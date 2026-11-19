@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { CONFIG } from "@/lib/config";
 import { stripe } from "@/lib/stripe";
+import { admin, adminEnabled, recordPurchase } from "@/lib/supabaseAdmin";
 
 /**
  * Stripe calls this when a purchase completes, even if the buyer closes the tab before returning.
- * Step 2 (Supabase) creates the member record here. For now it verifies the signature and logs the sale.
+ * It records the purchase and emails the buyer a sign-in link.
  */
 export async function POST(req: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -13,16 +15,41 @@ export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature") ?? "";
   let event: Stripe.Event;
   try {
-    event = stripe().webhooks.constructEvent(await req.text(), sig, secret);
+    event = await stripe().webhooks.constructEventAsync(await req.text(), sig, secret);
   } catch {
     return NextResponse.json({ error: "Bad signature." }, { status: 400 });
   }
 
   if (event.type === "checkout.session.completed") {
     const s = event.data.object as Stripe.Checkout.Session;
-    if (s.payment_status === "paid" && s.metadata?.product === "12-week-program") {
-      console.log("12-week program purchase", { session: s.id, email: s.customer_details?.email });
-      // TODO step 2: upsert the member in Supabase and send the login link.
+    const email = s.customer_details?.email;
+    if (s.payment_status === "paid" && s.metadata?.product === "12-week-program" && email) {
+      if (adminEnabled()) {
+        try {
+          await recordPurchase({
+            sessionId: s.id,
+            email,
+            name: s.customer_details?.name,
+            amountCents: s.amount_total,
+            paidAt: new Date(s.created * 1000).toISOString(),
+          });
+          const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+          const { error } = await admin().auth.signInWithOtp({
+            email,
+            options: {
+              shouldCreateUser: true,
+              emailRedirectTo: site ? `${site}/app` : undefined,
+              data: { name: s.customer_details?.name ?? "" },
+            },
+          });
+          if (error) console.error("Sign-in email failed", error);
+        } catch (e) {
+          console.error("Recording purchase failed", e);
+          return NextResponse.json({ error: "Retry later." }, { status: 500 }); // Stripe retries
+        }
+      } else {
+        console.log(`${CONFIG.productName} purchase`, { session: s.id, email });
+      }
     }
   }
   return NextResponse.json({ received: true });

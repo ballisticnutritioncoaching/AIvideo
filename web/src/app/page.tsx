@@ -28,7 +28,10 @@ export default function Home() {
         <div className="wrap">
           <nav className="row between hero-nav">
             <Logo light />
-            <Link href="/checkout" className="hero-login">Get the program</Link>
+            <div className="row" style={{ gap: 20 }}>
+              <Link href="/login" className="hero-login">Log in</Link>
+              <Link href="/checkout" className="hero-login">Get the program</Link>
+            </div>
           </nav>
           <div className="hero-body">
             <p className="label hero-label">3 gym versions · 4 days a week · about an hour a day</p>
