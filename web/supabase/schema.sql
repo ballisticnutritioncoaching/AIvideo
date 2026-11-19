@@ -54,3 +54,10 @@ drop policy if exists "own logs" on public.session_logs;
 create policy "own logs" on public.session_logs
   for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- Table permissions. Newer Supabase projects don't grant these automatically.
+-- Row level security above still limits members to their own rows.
+grant usage on schema public to authenticated, service_role;
+grant select, insert, update, delete on public.purchases, public.profiles, public.session_logs to service_role;
+grant select on public.purchases to authenticated;
+grant select, insert, update, delete on public.profiles, public.session_logs to authenticated;
