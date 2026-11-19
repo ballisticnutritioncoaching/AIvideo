@@ -1,0 +1,19 @@
+/* Ballistic Performance brand tokens, from Brand Manual 4.0 (Section 08). */
+@font-face { font-family: "Tomorrow"; src: url("./fonts/Tomorrow-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Tomorrow"; src: url("./fonts/Tomorrow-Light.ttf") format("truetype"); font-weight: 300; font-display: swap; }
+@font-face { font-family: "Sharp Grotesk"; src: url("./fonts/SharpGrotesk-Medium.ttf") format("truetype"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Work Sans"; src: url("./fonts/WorkSans-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+
+:root {
+  /* Colors: ~60% white, 30% blue, 10% red or less. Never red on blue or blue on red. */
+  --bp-white: #FFFFFF;            /* backgrounds, most of every layout */
+  --bp-performance-blue: #001193; /* headlines, body text on light, the logo */
+  --bp-energy-blue: #0055FF;      /* links and small highlights */
+  --bp-ballistic-red: #FF1100;    /* ONE accent per screen: a button, underline, key word */
+  --bp-deep-red: #B30000;         /* red text that must be readable on white */
+
+  /* Type */
+  --bp-font-label: "Tomorrow", system-ui, sans-serif;            /* uppercase, short headings, a few words */
+  --bp-font-heading: "Sharp Grotesk", "Work Sans", system-ui, sans-serif; /* sentence case headings; fallback Work Sans SemiBold */
+  --bp-font-body: "Work Sans", system-ui, sans-serif;            /* body copy */
+}
