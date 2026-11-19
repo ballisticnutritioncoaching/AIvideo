@@ -32,7 +32,7 @@ function Success() {
         if (remoteEnabled) {
           // Sign straight in with the one-time token. If it was already used, fall back to an email link.
           if (data.tokenHash) {
-            const { error } = await sb().auth.verifyOtp({ token_hash: data.tokenHash, type: "magiclink" });
+            const { error } = await sb().auth.verifyOtp({ token_hash: data.tokenHash, type: "email" }); // "email" covers both new and returning users
             if (!error) return router.replace("/onboarding");
           }
           setNeedLogin(data.email);
