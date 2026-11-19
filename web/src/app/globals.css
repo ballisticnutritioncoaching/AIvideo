@@ -301,3 +301,32 @@ html { scroll-padding-bottom: 170px; }
 
 .login-box { max-width: 440px; }
 .sync-error { background: var(--red-tint); color: var(--deep-red); font-size: 0.85rem; padding: 8px 16px; text-align: center; }
+
+/* Macro calculator */
+.wizard { margin-top: 20px; display: grid; gap: 14px; }
+.wizard h2 { font-size: 1.4rem; margin: 0; }
+.wizard-progress { display: flex; gap: 6px; }
+.wizard-progress span { flex: 1; height: 4px; border-radius: 99px; background: var(--line); }
+.wizard-progress span.on { background: var(--energy); }
+.option-list { display: grid; gap: 10px; }
+.option { display: grid; gap: 4px; text-align: left; padding: 14px 16px; border-radius: var(--radius); border: 1.5px solid var(--line); background: var(--white); color: var(--ink); }
+.option:hover { border-color: #9aa6dc; }
+.option.on { border-color: var(--blue); background: var(--tint); }
+.option-title { font-weight: 600; color: var(--blue); }
+.seg { display: inline-flex; background: var(--tint); border-radius: 8px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 7px 12px; border-radius: 6px; color: var(--muted); font-size: 0.85rem; font-weight: 500; }
+.seg button.on { background: var(--white); color: var(--blue); box-shadow: 0 1px 2px rgba(0, 17, 147, 0.12); }
+.unit-input { position: relative; }
+.unit-input .input { padding-right: 44px; }
+.unit-input span { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+.range { width: 100%; accent-color: var(--blue); }
+.hands { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.hands li { display: flex; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.hands li:first-child { border-top: 0; }
+.hands p { margin: 0; }
+.hand-icon { font-size: 1.6rem; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 10px; background: var(--tint); flex-shrink: 0; }
+.hand-main { color: var(--blue); }
+.macro-big.dim { opacity: 0.55; }
+details.how summary { cursor: pointer; color: var(--blue); }
+details.how ol { margin: 12px 0 0; padding-left: 20px; }
+details.how li { margin-bottom: 8px; }

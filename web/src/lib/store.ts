@@ -21,13 +21,23 @@ export interface SessionLog {
   note?: string;
 }
 
+/** Saved answers from the macro calculator (see lib/macros.ts) */
 export interface MacroInputs {
-  weight: string;
-  goalWeight: string;
-  activity: "14" | "15" | "16";
-  phase: "deficit" | "maintenance";
-  proteinPerLb: string;
-  fatPerLb: string;
+  v: 2;
+  units: "imperial" | "metric";
+  sex?: "male" | "female";
+  age?: number;
+  heightIn?: number;
+  weightLb?: number;
+  goal?: "lose" | "maintain" | "build" | "reverse" | "pregnant";
+  daily?: number;
+  training?: number;
+  goalWeightLb?: number;
+  proteinPerLb?: number;
+  split: "balanced" | "more-carb" | "less-carb";
+  meals: number;
+  tracking?: "none" | "lazy" | "full";
+  complete?: boolean;
 }
 
 export interface AppState {
