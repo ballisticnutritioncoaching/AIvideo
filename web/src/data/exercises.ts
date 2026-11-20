@@ -55,6 +55,7 @@ const LADDER: [name: string, pattern: Pattern, level: number][] = [
   ["Tall-kneeling Zercher Good Morning", "glutes", 3],
   ["Barbell Glute Bridge", "glutes", 4],
 
+  ["Split Squat", "single-leg", 0],
   ["Walking Lunge", "single-leg", 0],
   ["Dumbbell Split Squat", "single-leg", 1],
   ["Dumbbell Reverse Lunge", "single-leg", 2],
@@ -151,9 +152,15 @@ const EXTRA_VIDEOS: Record<string, string> = {
   "AbMat Sit-up": "https://youtube.com/shorts/ShrFtX559Tc",
 };
 
+/** Exercises without their own demo that borrow another's, with a note on the difference. */
+const BORROWED_DEMOS: Record<string, { from: string; note: string }> = {
+  "Split Squat": { from: "Dumbbell Split Squat", note: "The demo shows the dumbbell version. Same movement, no weights." },
+};
+
 export interface Exercise {
   id: string;
   name: string;
+  note?: string;
   pattern: Pattern;
   level: number;
   equipment: string;
@@ -202,7 +209,8 @@ function build(): Exercise[] {
     pattern,
     level,
     equipment: equipmentOf(name),
-    videoUrl: videos.get(name),
+    videoUrl: videos.get(name) ?? (BORROWED_DEMOS[name] ? videos.get(BORROWED_DEMOS[name].from) : undefined),
+    note: BORROWED_DEMOS[name]?.note,
     versions: [...(versions.get(name) ?? [])],
   }));
 }
@@ -244,6 +252,11 @@ function buildEquivalents(): Map<string, Set<string>> {
   return eq;
 }
 const EQUIVALENTS = buildEquivalents();
+
+/** Coach overrides: options never offered as a swap for a given exercise. */
+const SWAP_EXCLUDE: Record<string, string[]> = {
+  "Dumbbell Split Squat": ["Walking Lunge"],
+};
 const byId = new Map(EXERCISES.map((e) => [e.id, e]));
 const byName = new Map(EXERCISES.map((e) => [e.name.toLowerCase(), e]));
 
@@ -255,7 +268,8 @@ export const exerciseByName = (name: string) => byName.get(name.toLowerCase());
  * alternatives with different equipment for a similar stimulus. Swaps never go harder.
  */
 export function optionsFor(ex: Exercise) {
-  const same = EXERCISES.filter((e) => e.pattern === ex.pattern && e.id !== ex.id);
+  const excluded = new Set(SWAP_EXCLUDE[ex.name] ?? []);
+  const same = EXERCISES.filter((e) => e.pattern === ex.pattern && e.id !== ex.id && !excluded.has(e.name));
   // Same level, plus the program's equivalents that aren't harder by the ladder
   const equivalentNames = EQUIVALENTS.get(ex.name) ?? new Set<string>();
   const alternatives = same

@@ -74,6 +74,7 @@ function ExerciseDetail({ ex, onSelect }: { ex: Exercise; onSelect: (e: Exercise
           {ex.equipment}
           {ex.versions.length > 0 && ` · In the program: ${ex.versions.map((v) => VERSION_NAMES[v]).join(", ")}`}
         </p>
+        {ex.note && <p className="small muted" style={{ margin: 0 }}>{ex.note}</p>}
         {ex.videoUrl && <VideoEmbed url={ex.videoUrl} name={ex.name} />}
       </div>
       <OptionGroup title="Different equipment, similar stimulus" hint="Swap when you don't have the gear." items={alternatives} onSelect={onSelect} />
@@ -95,6 +96,7 @@ function OptionGroup({ title, hint, items, onSelect }: { title: string; hint: st
         <div key={o.id} className="swap-option">
           <p className="swap-kind"><span className="pill outline">{o.equipment}</span></p>
           <h4>{o.name}</h4>
+          {o.note && <p className="small muted" style={{ margin: 0 }}>{o.note}</p>}
           {o.videoUrl && <VideoEmbed url={o.videoUrl} name={o.name} />}
           <button type="button" className="link-btn small" onClick={() => onSelect(o)}>See swaps for {o.name}</button>
         </div>

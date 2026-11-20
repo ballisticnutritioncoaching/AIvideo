@@ -46,6 +46,7 @@ export function SwapPanel({
         <div key={ex.id} className="swap-option">
           <p className="swap-kind">{label} <span className="pill outline">{ex.equipment}</span></p>
           <h4>{ex.name}</h4>
+          {ex.note && <p className="small muted" style={{ margin: 0 }}>{ex.note}</p>}
           {ex.videoUrl && <VideoEmbed url={ex.videoUrl} name={ex.name} />}
           <button type="button" className="btn solid small block" onClick={() => onSwap(ex)}>Swap for this exercise</button>
         </div>
