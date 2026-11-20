@@ -82,7 +82,7 @@ const LADDER: [name: string, pattern: Pattern, level: number][] = [
   ["Tempo Pull-up", "vertical-pull", 3],
   ["Weighted Eccentric Chin-up", "vertical-pull", 4],
 
-  ["Half-kneeling Single-arm Band Row", "horizontal-pull", 1],
+  ["Half-kneeling Single-arm Band Row", "horizontal-pull", 2],
   ["Chest-supported Dumbbell Row", "horizontal-pull", 2],
   ["Three-point Dumbbell Row", "horizontal-pull", 2],
   ["Half-kneeling Single-arm Cable Row", "horizontal-pull", 2],
@@ -90,15 +90,15 @@ const LADDER: [name: string, pattern: Pattern, level: number][] = [
   ["Barbell Inverted Row, supinated grip", "horizontal-pull", 3],
   ["Dumbbell Bent-over Row", "horizontal-pull", 3],
 
-  ["1-1/4 Dumbbell Biceps Curl", "biceps", 1],
+  ["1-1/4 Dumbbell Biceps Curl", "biceps", 2],
   ["Incline Dumbbell Biceps Curl", "biceps", 2],
   ["Zottman Curl", "biceps", 2],
   ["Banded Triceps Push-down", "triceps", 1],
-  ["Cable Triceps Push-down", "triceps", 2],
+  ["Cable Triceps Push-down", "triceps", 1],
 
   ["Band Pull-apart", "shoulders", 1],
   ["Band Face Pull", "shoulders", 1],
-  ["Cable Face Pull", "shoulders", 2],
+  ["Cable Face Pull", "shoulders", 1],
   ["Three-position Bent-over Lateral Raise", "shoulders", 2],
   ["Prone Three-position Lateral Raise", "shoulders", 2],
 
@@ -208,6 +208,42 @@ function build(): Exercise[] {
 }
 
 export const EXERCISES: Exercise[] = build();
+
+/**
+ * Same-stimulus swaps with different equipment that sit at different ladder levels.
+ * 1) The program's own: the exercise each gym version uses in the same slot (block, day, order).
+ * 2) A few equipment-only pairs for gyms without a rack or bench.
+ */
+const MANUAL_EQUIVALENTS: [string, string][] = [
+  ["Back Squat", "Dumbbell Front Squat"],
+  ["Deficit Push-up", "Dumbbell Bench Press"],
+  ["Deficit Push-up", "Dumbbell Floor Press"],
+];
+
+function buildEquivalents(): Map<string, Set<string>> {
+  const slots = new Map<string, Set<string>>();
+  for (const v of PROGRAM) {
+    for (const b of v.blocks) {
+      for (const [dn, d] of [["d1", b.day1], ["d3", b.day3]] as const) {
+        for (const x of d.exercises) {
+          const name = x.videoUrls?.[0]?.name ?? x.name;
+          const k = `${b.block}-${dn}-${x.order}`;
+          slots.set(k, (slots.get(k) ?? new Set()).add(name));
+        }
+      }
+    }
+  }
+  const eq = new Map<string, Set<string>>();
+  const link = (a: string, c: string) => {
+    if (a === c) return;
+    eq.set(a, (eq.get(a) ?? new Set()).add(c));
+    eq.set(c, (eq.get(c) ?? new Set()).add(a));
+  };
+  for (const names of slots.values()) for (const a of names) for (const c of names) link(a, c);
+  for (const [a, c] of MANUAL_EQUIVALENTS) link(a, c);
+  return eq;
+}
+const EQUIVALENTS = buildEquivalents();
 const byId = new Map(EXERCISES.map((e) => [e.id, e]));
 const byName = new Map(EXERCISES.map((e) => [e.name.toLowerCase(), e]));
 
@@ -220,8 +256,13 @@ export const exerciseByName = (name: string) => byName.get(name.toLowerCase());
  */
 export function optionsFor(ex: Exercise) {
   const same = EXERCISES.filter((e) => e.pattern === ex.pattern && e.id !== ex.id);
-  const easier = same.filter((e) => e.level < ex.level).sort((a, b) => b.level - a.level);
-  const alternatives = same.filter((e) => e.level === ex.level);
+  // Same level, plus the program's equivalents that aren't harder by the ladder
+  const equivalentNames = EQUIVALENTS.get(ex.name) ?? new Set<string>();
+  const alternatives = same
+    .filter((e) => e.level === ex.level || (equivalentNames.has(e.name) && e.level <= ex.level))
+    .sort((a, b) => b.level - a.level);
+  const altIds = new Set(alternatives.map((e) => e.id));
+  const easier = same.filter((e) => e.level < ex.level && !altIds.has(e.id)).sort((a, b) => b.level - a.level);
   return { easier, alternatives };
 }
 
