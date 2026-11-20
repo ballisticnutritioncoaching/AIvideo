@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { optionsFor, PATTERNS, type Exercise } from "@/data/exercises";
+import { PATTERNS, swapSlots, type Exercise } from "@/data/exercises";
 import { VideoEmbed } from "./Video";
 
 /**
@@ -21,11 +21,7 @@ export function SwapPanel({
 }) {
   // Options always come from the programmed exercise, so a swap can't drift harder than the plan
   const base = original ?? current;
-  const { easier, alternatives } = optionsFor(base);
-  const picks: { label: string; ex: Exercise }[] = [
-    ...alternatives.map((ex) => ({ label: "Different equipment, similar stimulus", ex })),
-    ...easier.slice(0, 2).map((ex) => ({ label: "Easier", ex })),
-  ].filter((p) => p.ex.id !== current.id);
+  const picks = swapSlots(base).filter((p) => p.ex.id !== current.id);
 
   return (
     <div className="swap-panel" role="region" aria-label={`Swaps for ${current.name}`}>

@@ -288,3 +288,34 @@ export function searchExercises(q: string): Exercise[] {
     return terms.every((t) => hay.includes(t));
   }).slice(0, 30);
 }
+
+export interface SwapSlot {
+  label: string;
+  ex: Exercise;
+}
+
+/**
+ * At most one option per slot, closest first, no repeats:
+ * same level · same level (different equipment) · easier · easier (different equipment) · bodyweight.
+ */
+export function swapSlots(ex: Exercise): SwapSlot[] {
+  const { easier, alternatives } = optionsFor(ex);
+  const used = new Set<string>([ex.id]);
+  const out: SwapSlot[] = [];
+  const take = (label: string, list: Exercise[]) => {
+    const pick = list.find((e) => !used.has(e.id));
+    if (pick) {
+      used.add(pick.id);
+      out.push({ label, ex: pick });
+    }
+  };
+  const sameGear = (e: Exercise) => e.equipment === ex.equipment;
+  take("Same level", alternatives.filter(sameGear));
+  take("Same level, different equipment", alternatives.filter((e) => !sameGear(e)));
+  take("Easier", easier.filter(sameGear));
+  take("Easier, different equipment", easier.filter((e) => !sameGear(e)));
+  if (ex.equipment !== "Bodyweight") {
+    take("Bodyweight", [...alternatives, ...easier].filter((e) => e.equipment === "Bodyweight"));
+  }
+  return out;
+}

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
-import { EXERCISES, exerciseById, optionsFor, PATTERNS, searchExercises, type Exercise, type Pattern } from "@/data/exercises";
+import { EXERCISES, exerciseById, PATTERNS, searchExercises, swapSlots, type Exercise, type Pattern } from "@/data/exercises";
 import { VideoEmbed } from "./Video";
 
 const VERSION_NAMES = { functional: "Functional gym", commercial: "Commercial gym", home: "Home" } as const;
@@ -61,7 +61,7 @@ function Search() {
 }
 
 function ExerciseDetail({ ex, onSelect }: { ex: Exercise; onSelect: (e: Exercise | null) => void }) {
-  const { easier, alternatives } = optionsFor(ex);
+  const slots = swapSlots(ex);
   return (
     <div className="stack">
       <div className="card stack">
@@ -77,24 +77,11 @@ function ExerciseDetail({ ex, onSelect }: { ex: Exercise; onSelect: (e: Exercise
         {ex.note && <p className="small muted" style={{ margin: 0 }}>{ex.note}</p>}
         {ex.videoUrl && <VideoEmbed url={ex.videoUrl} name={ex.name} />}
       </div>
-      <OptionGroup title="Different equipment, similar stimulus" hint="Swap when you don't have the gear." items={alternatives} onSelect={onSelect} />
-      <OptionGroup title="Easier versions" hint="Less load, less range or more support. Use when something doesn't feel right." items={easier} onSelect={onSelect} />
-      {!alternatives.length && !easier.length && <p className="small muted">This is the simplest version of this movement, so there&apos;s nothing to swap down to.</p>}
-    </div>
-  );
-}
-
-function OptionGroup({ title, hint, items, onSelect }: { title: string; hint: string; items: Exercise[]; onSelect: (e: Exercise) => void }) {
-  if (!items.length) return null;
-  return (
-    <div className="stack">
-      <div>
-        <h3 style={{ marginBottom: 2 }}>{title}</h3>
-        <p className="small muted" style={{ margin: 0 }}>{hint}</p>
-      </div>
-      {items.map((o) => (
+      <h3 style={{ marginBottom: 0 }}>Swaps</h3>
+      {slots.length === 0 && <p className="small muted">This is the simplest version of this movement, so there&apos;s nothing to swap to.</p>}
+      {slots.map(({ label, ex: o }) => (
         <div key={o.id} className="swap-option">
-          <p className="swap-kind"><span className="pill outline">{o.equipment}</span></p>
+          <p className="swap-kind">{label} <span className="pill outline">{o.equipment}</span></p>
           <h4>{o.name}</h4>
           {o.note && <p className="small muted" style={{ margin: 0 }}>{o.note}</p>}
           {o.videoUrl && <VideoEmbed url={o.videoUrl} name={o.name} />}
