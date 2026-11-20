@@ -206,8 +206,8 @@ export const LIBRARY: Article[] = [
       { t: "p", text: "Here's the problem. Most parents we work with already \"eat pretty healthy.\" Smoothies, granola, salads, peanut butter. Then they can't figure out why the scale won't move." },
       { t: "p", text: "Healthy and low calorie are not the same thing. A cup of granola is about 500 calories. Two tablespoons of peanut butter is about 190, and most people's scoop is a lot bigger than two tablespoons. None of those are bad foods. They just add up fast." },
       { t: "cards", items: [
-        { title: "Quality", text: "What you eat. Protein, fruits, vegetables, whole grains and potatoes, healthy fats. Mostly foods that look like they came from nature. Quality decides how you feel, how you recover, and how much muscle you keep." },
-        { title: "Quantity", text: "How much you eat. Calories, measured over days and weeks. Quantity decides whether you lose, gain or maintain weight. \"Healthy\" food still has calories." },
+        { title: "Quality", text: "The quality of the food you eat determines your body composition. Quality is what you eat: protein, fruits, vegetables, whole grains and potatoes, healthy fats. Mostly foods that look like they came from nature." },
+        { title: "Quantity", text: "The quantity of food you eat determines your body weight. Quantity is how much you eat: calories, measured over days and weeks. \"Healthy\" food still has calories." },
       ] },
       { t: "h", text: "Build every plate in this order" },
       { t: "steps", items: [
