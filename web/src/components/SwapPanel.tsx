@@ -5,8 +5,8 @@ import { optionsFor, PATTERNS, type Exercise } from "@/data/exercises";
 import { VideoEmbed } from "./Video";
 
 /**
- * Easier and harder versions of the current exercise, each with its demo and a swap button.
- * The guide's rule: same movement, same muscles, keep the sets, reps, tempo and rest.
+ * Easier versions and different-equipment alternatives for the programmed exercise, each with its
+ * demo and a swap button. Swaps never go harder. Same movement, same muscles: keep sets, reps, tempo, rest.
  */
 export function SwapPanel({
   current,
@@ -19,20 +19,21 @@ export function SwapPanel({
   onSwap: (ex: Exercise | null) => void;
   onClose: () => void;
 }) {
-  const { easier, alternatives, harder } = optionsFor(current);
+  // Options always come from the programmed exercise, so a swap can't drift harder than the plan
+  const base = original ?? current;
+  const { easier, alternatives } = optionsFor(base);
   const picks: { label: string; ex: Exercise }[] = [
-    ...(easier[0] ? [{ label: "Easier", ex: easier[0] }] : []),
-    ...alternatives.slice(0, 2).map((ex) => ({ label: "Same level, different equipment", ex })),
-    ...(harder[0] ? [{ label: "Harder", ex: harder[0] }] : []),
-  ];
+    ...alternatives.map((ex) => ({ label: "Different equipment, similar stimulus", ex })),
+    ...easier.slice(0, 2).map((ex) => ({ label: "Easier", ex })),
+  ].filter((p) => p.ex.id !== current.id);
 
   return (
     <div className="swap-panel" role="region" aria-label={`Swaps for ${current.name}`}>
       <div className="row between">
-        <p className="label blue" style={{ margin: 0 }}>Swaps · {PATTERNS[current.pattern]}</p>
+        <p className="label blue" style={{ margin: 0 }}>Swaps · {PATTERNS[base.pattern]}</p>
         <button type="button" className="btn ghost small" onClick={onClose}>Close</button>
       </div>
-      <p className="small muted" style={{ margin: 0 }}>Same movement, same muscles. Keep the sets, reps, tempo and rest.</p>
+      <p className="small muted" style={{ margin: 0 }}>Missing equipment or need it easier today? Same movement, same muscles. Keep the sets, reps, tempo and rest.</p>
       {original && original.id !== current.id && (
         <div className="swap-option">
           <p className="swap-kind">Original</p>
@@ -49,7 +50,7 @@ export function SwapPanel({
           <button type="button" className="btn solid small block" onClick={() => onSwap(ex)}>Swap for this exercise</button>
         </div>
       ))}
-      <Link href={`/app/library/swaps?ex=${current.id}`} className="small">See every option for {PATTERNS[current.pattern].toLowerCase()}</Link>
+      <Link href={`/app/library/swaps?ex=${base.id}`} className="small">See every swap for {base.name}</Link>
     </div>
   );
 }

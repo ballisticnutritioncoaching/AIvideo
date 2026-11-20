@@ -1,5 +1,6 @@
 // Exercise library: every movement in the program, grouped by pattern and ordered easiest to hardest.
 // Swaps follow the guide's rule: same movement, same muscles. Keep the sets, reps, tempo and rest.
+// Swaps are only ever easier (regressions) or a different piece of equipment at the same level.
 // Videos come from the program data, plus conditioning demos linked in the guide's scaling notes.
 
 import { PROGRAM } from "./program";
@@ -213,13 +214,15 @@ const byName = new Map(EXERCISES.map((e) => [e.name.toLowerCase(), e]));
 export const exerciseById = (id: string) => byId.get(id);
 export const exerciseByName = (name: string) => byName.get(name.toLowerCase());
 
-/** Easier, same-level and harder options for an exercise, closest first. */
+/**
+ * Swap options for an exercise: easier versions (regressions, closest first) and same-level
+ * alternatives with different equipment for a similar stimulus. Swaps never go harder.
+ */
 export function optionsFor(ex: Exercise) {
   const same = EXERCISES.filter((e) => e.pattern === ex.pattern && e.id !== ex.id);
   const easier = same.filter((e) => e.level < ex.level).sort((a, b) => b.level - a.level);
-  const harder = same.filter((e) => e.level > ex.level).sort((a, b) => a.level - b.level);
   const alternatives = same.filter((e) => e.level === ex.level);
-  return { easier, alternatives, harder };
+  return { easier, alternatives };
 }
 
 export function searchExercises(q: string): Exercise[] {

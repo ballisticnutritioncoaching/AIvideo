@@ -61,7 +61,7 @@ function Search() {
 }
 
 function ExerciseDetail({ ex, onSelect }: { ex: Exercise; onSelect: (e: Exercise | null) => void }) {
-  const { easier, alternatives, harder } = optionsFor(ex);
+  const { easier, alternatives } = optionsFor(ex);
   return (
     <div className="stack">
       <div className="card stack">
@@ -76,9 +76,9 @@ function ExerciseDetail({ ex, onSelect }: { ex: Exercise; onSelect: (e: Exercise
         </p>
         {ex.videoUrl && <VideoEmbed url={ex.videoUrl} name={ex.name} />}
       </div>
-      <OptionGroup title="Easier (regressions)" hint="Less load, less range or more support." items={easier} onSelect={onSelect} />
-      <OptionGroup title="Same level, different equipment" hint="Swap when you don't have the gear." items={alternatives} onSelect={onSelect} />
-      <OptionGroup title="Harder (progressions)" hint="More load, range or skill." items={harder} onSelect={onSelect} />
+      <OptionGroup title="Different equipment, similar stimulus" hint="Swap when you don't have the gear." items={alternatives} onSelect={onSelect} />
+      <OptionGroup title="Easier versions" hint="Less load, less range or more support. Use when something doesn't feel right." items={easier} onSelect={onSelect} />
+      {!alternatives.length && !easier.length && <p className="small muted">This is the simplest version of this movement, so there&apos;s nothing to swap down to.</p>}
     </div>
   );
 }
@@ -107,7 +107,7 @@ function Browse({ onSelect }: { onSelect: (e: Exercise) => void }) {
   const patterns = Object.keys(PATTERNS) as Pattern[];
   return (
     <div className="stack">
-      <p className="small muted" style={{ margin: 0 }}>Or browse by movement, easiest to hardest:</p>
+      <p className="small muted" style={{ margin: 0 }}>Or browse by movement:</p>
       {patterns.map((p) => {
         const list = EXERCISES.filter((e) => e.pattern === p).sort((a, b) => a.level - b.level);
         if (!list.length) return null;

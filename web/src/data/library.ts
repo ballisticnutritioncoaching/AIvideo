@@ -152,7 +152,7 @@ export const LIBRARY: Article[] = [
     interactive: "swaps",
     group: "Training",
     title: "Exercise swaps",
-    dek: "Search any exercise to see easier and harder versions, with demos. Same movement, same muscles: keep the sets, reps, tempo and rest the same.",
+    dek: "Search any exercise to see easier versions and equipment swaps, with demos. Same movement, same muscles: keep the sets, reps, tempo and rest the same.",
     body: [
       { t: "h", text: "Conditioning swaps" },
       { t: "table", head: ["Distance", "Equals"], rows: [

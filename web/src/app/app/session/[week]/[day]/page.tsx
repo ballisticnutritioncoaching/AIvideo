@@ -263,7 +263,7 @@ function ExerciseCard({
       {swapsOpen && current && (
         <SwapPanel
           current={current}
-          original={swapped ? original : undefined}
+          original={original}
           onSwap={(picked) => { onSwap(picked && picked.id !== original?.id ? picked.id : null); setSwapsOpen(false); }}
           onClose={() => setSwapsOpen(false)}
         />

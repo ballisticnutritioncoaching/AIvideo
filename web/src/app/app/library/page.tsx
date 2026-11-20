@@ -13,7 +13,7 @@ export default function LibraryPage() {
         <Link href="/app/library/swaps" className="card tool-card">
           <span className="label blue">Tool</span>
           <strong>Exercise swaps</strong>
-          <span className="small muted">Search any exercise for easier and harder versions, with demos.</span>
+          <span className="small muted">Search any exercise for easier versions and equipment swaps, with demos.</span>
         </Link>
         <Link href="/app/library/grocery-list" className="card tool-card">
           <span className="label blue">Tool</span>
