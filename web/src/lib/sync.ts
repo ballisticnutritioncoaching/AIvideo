@@ -31,6 +31,7 @@ export async function loadMember(userId: string, email: string, metaName?: strin
         : undefined,
     seenMilestones: p?.seen_milestones ?? [],
     macros: p?.macros ?? undefined,
+    grocery: p?.grocery ?? undefined,
     logs: Object.fromEntries(
       (logs.data ?? []).map((r) => [
         r.key,
@@ -45,6 +46,7 @@ export async function loadMember(userId: string, email: string, metaName?: strin
 export function startSync(userId: string, onError: (msg: string) => void) {
   const dirtyLogs = new Map<string, SessionLog>();
   let profileDirty: AppState | null = null;
+  let groceryDirty: AppState["grocery"] | null = null;
   let timer: number | undefined;
 
   const flush = async () => {
@@ -57,7 +59,11 @@ export function startSync(userId: string, onError: (msg: string) => void) {
     dirtyLogs.clear();
     const prof = profileDirty;
     profileDirty = null;
+    const groc = groceryDirty;
+    groceryDirty = null;
     const ops = [];
+    // Separate write, so the grocery list never blocks saving training data
+    if (groc) ops.push(client.from("profiles").upsert({ user_id: userId, grocery: groc }, { onConflict: "user_id" }));
     if (logRows.length) ops.push(client.from("session_logs").upsert(logRows, { onConflict: "user_id,key" }));
     if (prof) {
       ops.push(
@@ -91,8 +97,9 @@ export function startSync(userId: string, onError: (msg: string) => void) {
     ) {
       profileDirty = next;
     }
+    if (prev.grocery !== next.grocery) groceryDirty = next.grocery ?? { checked: [], custom: {} };
     // Finishing a session or changing settings saves right away; typing waits a moment
-    const urgent = profileDirty !== null || Object.keys(next.logs).some((k) => prev.logs[k]?.completedAt !== next.logs[k]?.completedAt);
+    const urgent = profileDirty !== null || groceryDirty !== null || Object.keys(next.logs).some((k) => prev.logs[k]?.completedAt !== next.logs[k]?.completedAt);
     window.clearTimeout(timer);
     timer = window.setTimeout(flush, urgent ? 0 : 800);
   });

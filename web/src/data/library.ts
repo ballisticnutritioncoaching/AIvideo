@@ -387,10 +387,10 @@ export const getArticle = (slug: string) => LIBRARY.find((a) => a.slug === slug)
 
 /** Grocery list from the guide, used by the interactive checklist. */
 export const GROCERY: { category: string; items: string[] }[] = [
-  { category: "Protein", items: ["Chicken breasts or thighs", "90/10 or leaner ground beef", "Ground turkey", "Rotisserie chicken", "Eggs and liquid egg whites", "Plain Greek yogurt", "Cottage cheese", "Canned tuna or chicken", "Frozen shrimp or fish", "Deli turkey or chicken", "Protein powder", "String cheese"] },
-  { category: "Fruits and vegetables", items: ["Steam bag veggies", "Frozen broccoli, green beans, peppers", "Bagged salad kits", "Baby carrots, snap peas, cucumbers", "Bell peppers and onions", "Frozen spinach", "Bananas, apples, clementines, grapes", "Frozen berries", "Fresh berries in season", "Fruit cups or pouches"] },
-  { category: "Starches", items: ["Microwave rice cups or a bag of rice", "Potatoes and sweet potatoes", "Oats", "Whole-grain bread", "Tortillas and wraps", "Pasta", "Beans", "Rice cakes"] },
-  { category: "Fats and extras", items: ["Olive oil and cooking spray", "Avocados", "Almonds, cashews", "Peanut butter", "Shredded cheese", "Light dressings"] },
-  { category: "Flavor", items: ["Salsa", "Hot sauce", "Mustard", "Low-sugar BBQ sauce", "Seasoning blends", "Soy sauce or teriyaki"] },
-  { category: "Car and desk stash", items: ["Protein bars", "Ready-to-drink protein shakes", "Beef or turkey jerky", "Single-serve nuts", "Fruit that doesn't need cutting"] },
+  { category: "Protein", items: ["Chicken breasts", "Chicken thighs", "90/10 or leaner ground beef", "Ground turkey", "Rotisserie chicken", "Eggs", "Liquid egg whites", "Plain Greek yogurt", "Cottage cheese", "Canned tuna", "Canned chicken", "Frozen shrimp", "Frozen fish", "Deli turkey", "Deli chicken", "Protein powder", "String cheese"] },
+  { category: "Fruits and vegetables", items: ["Steam bag veggies", "Frozen broccoli", "Frozen green beans", "Frozen peppers", "Bagged salad kits", "Baby carrots", "Snap peas", "Cucumbers", "Bell peppers", "Onions", "Frozen spinach", "Bananas", "Apples", "Clementines", "Grapes", "Frozen berries", "Fresh berries in season", "Fruit cups", "Fruit pouches"] },
+  { category: "Starches", items: ["Microwave rice cups", "Rice", "Potatoes", "Sweet potatoes", "Oats", "Whole-grain bread", "Tortillas", "Wraps", "Pasta", "Beans", "Rice cakes"] },
+  { category: "Fats and extras", items: ["Olive oil", "Cooking spray", "Avocados", "Almonds", "Cashews", "Peanut butter", "Shredded cheese", "Light dressings"] },
+  { category: "Flavor", items: ["Salsa", "Hot sauce", "Mustard", "Low-sugar BBQ sauce", "Seasoning blends", "Soy sauce", "Teriyaki sauce"] },
+  { category: "Car and desk stash", items: ["Protein bars", "Ready-to-drink protein shakes", "Beef jerky", "Turkey jerky", "Single-serve nuts", "Fruit that doesn't need cutting"] },
 ];

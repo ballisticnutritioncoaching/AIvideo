@@ -384,3 +384,7 @@ details.how li { margin-bottom: 8px; }
 .tool-card { display: grid; gap: 4px; text-decoration: none !important; color: var(--blue); }
 .tool-card:hover { border-color: #9aa6dc; }
 .tool-card .label { margin: 0; }
+.grocery-add-link { margin-top: 10px; display: inline-block; }
+.grocery-add { margin-top: 10px; }
+.grocery-add .input { flex: 1; min-width: 0; }
+.grocery-section .pill.mine { font-size: 0.62rem; padding: 1px 8px; }

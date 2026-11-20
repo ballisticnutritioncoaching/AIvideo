@@ -1,96 +1,112 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { GROCERY } from "@/data/library";
+import { update, useAppState, type AppState } from "@/lib/store";
 
-// Saved on this device only: the list you shop from lives on your phone.
-const KEY = "bp12:grocery";
+type Grocery = NonNullable<AppState["grocery"]>;
+const EMPTY: Grocery = { checked: [], custom: {} };
+const keyOf = (category: string, item: string) => `${category}::${item}`;
 
-interface GroceryState {
-  checked: string[];
-  custom: string[];
-}
-
-function load(): GroceryState {
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw) return { checked: [], custom: [], ...JSON.parse(raw) };
-  } catch {}
-  return { checked: [], custom: [] };
-}
-
+/** One food per line. Members can add their own foods to any section; those live on their account only. */
 export function GroceryList() {
-  const [state, setState] = useState<GroceryState | null>(null);
-  const [newItem, setNewItem] = useState("");
-  useEffect(() => setState(load()), []);
+  const s = useAppState();
+  const g: Grocery = { ...EMPTY, ...s?.grocery };
+  const save = (next: Grocery) => update((st) => ({ ...st, grocery: next }));
 
-  const save = (next: GroceryState) => {
-    setState(next);
-    try { window.localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
+  if (!s) return null;
+  const checked = new Set(g.checked);
+  const toggle = (k: string) =>
+    save({ ...g, checked: checked.has(k) ? g.checked.filter((x) => x !== k) : [...g.checked, k] });
+  const addFood = (category: string, food: string) => {
+    const list = g.custom[category] ?? [];
+    const all = [...(GROCERY.find((c) => c.category === category)?.items ?? []), ...list].map((x) => x.toLowerCase());
+    if (all.includes(food.toLowerCase())) return false;
+    save({ ...g, custom: { ...g.custom, [category]: [...list, food] } });
+    return true;
   };
-  if (!state) return null;
+  const removeFood = (category: string, food: string) =>
+    save({
+      checked: g.checked.filter((x) => x !== keyOf(category, food)),
+      custom: { ...g.custom, [category]: (g.custom[category] ?? []).filter((x) => x !== food) },
+    });
 
-  const checked = new Set(state.checked);
-  const toggle = (item: string) =>
-    save({ ...state, checked: checked.has(item) ? state.checked.filter((x) => x !== item) : [...state.checked, item] });
-  const add = (e: React.FormEvent) => {
-    e.preventDefault();
-    const item = newItem.trim();
-    if (!item || state.custom.includes(item)) return;
-    save({ ...state, custom: [...state.custom, item] });
-    setNewItem("");
-  };
-  const sections = [...GROCERY, ...(state.custom.length ? [{ category: "My extras", items: state.custom }] : [])];
-  const total = sections.reduce((n, s) => n + s.items.length, 0);
+  const total = GROCERY.reduce((n, c) => n + c.items.length + (g.custom[c.category]?.length ?? 0), 0);
 
   return (
     <section className="grocery">
       <div className="grocery-bar">
         <span className="small"><strong>{checked.size}</strong> of {total} in the cart</span>
-        <div className="row" style={{ gap: 8 }}>
-          <button type="button" className="btn small" disabled={!checked.size} onClick={() => save({ ...state, checked: [] })}>
-            Clear checks
-          </button>
-          {state.custom.length > 0 && (
-            <button type="button" className="btn small ghost" onClick={() => window.confirm("Remove your added items and clear all checks?") && save({ checked: [], custom: [] })}>
-              Reset all
-            </button>
-          )}
-        </div>
+        <button type="button" className="btn small" disabled={!checked.size} onClick={() => save({ ...g, checked: [] })}>
+          Clear list
+        </button>
       </div>
 
-      {sections.map((sec) => {
-        const got = sec.items.filter((i) => checked.has(i)).length;
+      {GROCERY.map((sec) => {
+        const mine = g.custom[sec.category] ?? [];
+        const lines = [...sec.items.map((item) => ({ item, own: false })), ...mine.map((item) => ({ item, own: true }))];
+        const got = lines.filter((l) => checked.has(keyOf(sec.category, l.item))).length;
         return (
           <div key={sec.category} className="grocery-section">
             <div className="row between">
               <h3>{sec.category}</h3>
-              <span className="small muted">{got}/{sec.items.length}</span>
+              <span className="small muted">{got}/{lines.length}</span>
             </div>
             <ul>
-              {sec.items.map((item) => (
-                <li key={item}>
-                  <label className={checked.has(item) ? "got" : ""}>
-                    <input type="checkbox" checked={checked.has(item)} onChange={() => toggle(item)} />
-                    <span>{item}</span>
-                    {sec.category === "My extras" && (
-                      <button type="button" className="link-btn small" aria-label={`Remove ${item}`}
-                        onClick={(e) => { e.preventDefault(); save({ checked: state.checked.filter((x) => x !== item), custom: state.custom.filter((x) => x !== item) }); }}>
-                        Remove
-                      </button>
-                    )}
-                  </label>
-                </li>
-              ))}
+              {lines.map(({ item, own }) => {
+                const k = keyOf(sec.category, item);
+                return (
+                  <li key={k}>
+                    <label className={checked.has(k) ? "got" : ""}>
+                      <input type="checkbox" checked={checked.has(k)} onChange={() => toggle(k)} />
+                      <span>{item}</span>
+                      {own && <span className="pill outline mine">Yours</span>}
+                      {own && (
+                        <button type="button" className="link-btn small" aria-label={`Remove ${item}`}
+                          onClick={(e) => { e.preventDefault(); removeFood(sec.category, item); }}>
+                          Remove
+                        </button>
+                      )}
+                    </label>
+                  </li>
+                );
+              })}
             </ul>
+            <AddFood category={sec.category} onAdd={(food) => addFood(sec.category, food)} />
           </div>
         );
       })}
-
-      <form className="row grocery-add" onSubmit={add}>
-        <input className="input" placeholder="Add something else (diapers count)" value={newItem} onChange={(e) => setNewItem(e.target.value)} aria-label="Add an item" />
-        <button type="submit" className="btn small solid" disabled={!newItem.trim()}>Add</button>
-      </form>
+      <p className="small muted" style={{ margin: 0 }}>Foods you add are saved to your account only. They won&apos;t show up for anyone else.</p>
     </section>
+  );
+}
+
+function AddFood({ category, onAdd }: { category: string; onAdd: (food: string) => boolean }) {
+  const [open, setOpen] = useState(false);
+  const [food, setFood] = useState("");
+  const [msg, setMsg] = useState("");
+  if (!open) {
+    return (
+      <button type="button" className="link-btn small grocery-add-link" onClick={() => setOpen(true)}>
+        + Add a food to {category.toLowerCase()}
+      </button>
+    );
+  }
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const f = food.trim();
+    if (!f) return;
+    if (onAdd(f)) { setFood(""); setMsg(""); } else setMsg("That's already on the list.");
+  };
+  return (
+    <form className="grocery-add" onSubmit={submit}>
+      <div className="row" style={{ flexWrap: "nowrap" }}>
+        <input className="input" autoFocus placeholder="One food, e.g. Turkey bacon" value={food}
+          onChange={(e) => { setFood(e.target.value); setMsg(""); }} aria-label={`Add a food to ${category}`} />
+        <button type="submit" className="btn small solid" disabled={!food.trim()}>Add</button>
+        <button type="button" className="btn small ghost" onClick={() => { setOpen(false); setFood(""); setMsg(""); }}>Done</button>
+      </div>
+      {msg && <p className="small muted" style={{ margin: "6px 0 0" }}>{msg}</p>}
+    </form>
   );
 }

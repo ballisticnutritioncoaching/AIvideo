@@ -51,6 +51,8 @@ export interface AppState {
   logs: Record<string, SessionLog>;
   seenMilestones: number[];
   macros?: MacroInputs;
+  /** Grocery checklist: checked keys ("Category::Food") and foods this member added to each section */
+  grocery?: { checked: string[]; custom: Record<string, string[]> };
 }
 
 const KEY = "bp12:v1";

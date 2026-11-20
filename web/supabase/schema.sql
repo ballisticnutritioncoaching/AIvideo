@@ -22,8 +22,11 @@ create table if not exists public.profiles (
   days smallint[],
   seen_milestones smallint[] not null default '{}',
   macros jsonb,
+  grocery jsonb,
   updated_at timestamptz not null default now()
 );
+-- Added later: safe to run on an existing database
+alter table public.profiles add column if not exists grocery jsonb;
 
 -- One row per logged session, keyed like w3d1 (week 3, day 1).
 create table if not exists public.session_logs (
