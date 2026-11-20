@@ -51,6 +51,14 @@ export function ArticleBody({ blocks }: { blocks: Block[] }) {
                 </p>
               </div>
             );
+          case "credit":
+            return (
+              <aside key={i} className="credit">
+                <p className="label blue">Credit</p>
+                <p>{b.text}</p>
+                <a href="https://optimizemenutrition.com" target="_blank" rel="noopener">Learn more from EC at OptimizeMe Nutrition</a>
+              </aside>
+            );
           case "cards":
             return (
               <div key={i} className={`grid ${b.items.length === 3 ? "three" : "two"}`}>

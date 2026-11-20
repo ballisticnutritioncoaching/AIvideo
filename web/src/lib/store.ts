@@ -19,6 +19,10 @@ export interface SessionLog {
   /** conditioning: rounds, time or a short note */
   result?: string;
   note?: string;
+  /** Gym version used for this session, when different from the default (traveling, split memberships) */
+  version?: VersionId;
+  /** Swapped exercises: exercise order ("2A") -> exercise id from data/exercises.ts */
+  swaps?: Record<string, string>;
 }
 
 /** Saved answers from the macro calculator (see lib/macros.ts) */

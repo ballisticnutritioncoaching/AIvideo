@@ -10,7 +10,7 @@ const INSIDE = [
   { t: "Log every set", d: "Write down your weights, see what you lifted last week, and let the rest timer run itself." },
   { t: "3 gym versions", d: "Functional fitness gym, commercial gym or a minimalist home setup. Same plan, your equipment." },
   { t: "Macro calculator", d: "Our 5-step method turns your weight and goal into calories and protein in about a minute." },
-  { t: "Stupid simple nutrition", d: "800 grams, lazy macros, a grocery list, component prep and takeout orders that work." },
+  { t: "Stupid simple nutrition", d: "EC Synkowski's 800 grams and Lazy Macros, plus a grocery list, component prep and takeout orders that work." },
 ];
 
 const FAQ = [

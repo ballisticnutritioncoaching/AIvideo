@@ -45,3 +45,35 @@ export function DemoButton({ url, name }: { url: string; name: string }) {
     </>
   );
 }
+
+/** Inline player that shows the YouTube thumbnail first and loads the video on tap. */
+export function VideoEmbed({ url, name }: { url: string; name: string }) {
+  const [playing, setPlaying] = useState(false);
+  const id = youtubeId(url);
+  const isShort = url.includes("/shorts/");
+  if (!id) {
+    return (
+      <a className="demo-link" href={url} target="_blank" rel="noopener">
+        Watch demo
+      </a>
+    );
+  }
+  return (
+    <div className={`video ${isShort ? "short" : ""}`}>
+      {playing ? (
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&autoplay=1`}
+          title={`${name} demo`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      ) : (
+        <button type="button" className="video-thumb" onClick={() => setPlaying(true)} aria-label={`Play ${name} demo`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" />
+          <span className="video-play" aria-hidden>▶</span>
+        </button>
+      )}
+    </div>
+  );
+}

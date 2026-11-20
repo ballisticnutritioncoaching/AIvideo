@@ -241,7 +241,7 @@ function GoalWeight({ m, set, onNext }: { m: MacroInputs; set: (p: Partial<Macro
 function MealsTracking({ m, set, onNext }: { m: MacroInputs; set: (p: Partial<MacroInputs>) => void; onNext: () => void }) {
   const levels = [
     { v: "none", t: "No tracking", d: "Use your hand to size portions. No apps, no scale. Plenty of people never need more." },
-    { v: "lazy", t: "Lazy macros", d: "Track 2 numbers: calories and protein. About 90% of the result for a fraction of the effort." },
+    { v: "lazy", t: "Lazy Macros", d: "EC Synkowski's method: track 2 numbers, calories and protein. About 90% of the result for a fraction of the effort." },
     { v: "full", t: "Full macros", d: "Track protein, carbs and fat. For more precision, or when progress has stalled." },
   ] as const;
   return (
@@ -303,7 +303,7 @@ function Results({ m, input, r, set, edit }: { m: MacroInputs; input: MacroInput
       {tracking === "none" ? <>{hands}{grams}</> : <>{grams}{hands}</>}
 
       <div className="callout">
-        <p><strong>Veggies: 800 grams a day.</strong> That&apos;s about 6-8 fists of fruits and vegetables, spread across your meals. Fresh, frozen and canned all count.</p>
+        <p><strong>Veggies: 800 grams a day.</strong> That&apos;s about 6-8 fists of fruits and vegetables, spread across your meals. Fresh, frozen and canned all count. <span className="muted">(The #800gChallenge, courtesy of EC Synkowski.)</span></p>
       </div>
 
       <section className="card stack">
@@ -370,7 +370,7 @@ function Results({ m, input, r, set, edit }: { m: MacroInputs; input: MacroInput
 
       <div className="row">
         <button type="button" className="btn" onClick={edit}>Change my answers</button>
-        <Link href="/app/library/macros" className="btn ghost">Read: Macros and lazy macros</Link>
+        <Link href="/app/library/macros" className="btn ghost">Read: Macros and Lazy Macros</Link>
       </div>
     </div>
   );
@@ -433,7 +433,7 @@ function Grams({ r, tracking }: { r: MacroResult; tracking: "none" | "lazy" | "f
       </div>
       {lazy && (
         <p className="small muted" style={{ margin: 0 }}>
-          <strong>Lazy macros:</strong> hit your protein and stay at or under your calories. Let carbs and fat land wherever they land.
+          <strong>Lazy Macros</strong> (EC Synkowski&apos;s method): hit your protein and stay at or under your calories. Let carbs and fat land wherever they land.
         </p>
       )}
       {tracking === "none" && (

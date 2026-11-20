@@ -5,8 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { BoxBreathing } from "@/components/BoxBreathing";
 import { RestTimer, type RestRequest } from "@/components/RestTimer";
+import { GymSwitch } from "@/components/GymSwitch";
+import { SwapPanel } from "@/components/SwapPanel";
 import { DemoButton } from "@/components/Video";
-import type { StrengthDay, StrengthExercise } from "@/data/types";
+import { exerciseById, exerciseByName, type Exercise } from "@/data/exercises";
+import type { StrengthDay, StrengthExercise, VersionId } from "@/data/types";
 import {
   blockForWeek,
   conditioningFor,
@@ -36,10 +39,12 @@ export default function SessionPage() {
     );
   }
 
-  const version = getVersion(s.profile!.version);
-  const block = blockForWeek(version, week);
   const key = sessionKey(week, day);
   const log: SessionLog = s.logs[key] ?? { sets: {} };
+  const defaultVersion = s.profile!.version;
+  const versionId: VersionId = log.version ?? defaultVersion;
+  const version = getVersion(versionId);
+  const block = blockForWeek(version, week);
   const done = Boolean(log.completedAt);
 
   const save = (next: SessionLog) => update((st) => ({ ...st, logs: { ...st.logs, [key]: next } }));
@@ -50,7 +55,16 @@ export default function SessionPage() {
   const undo = () => save({ ...log, completedAt: undefined });
 
   const prevKey = week > block.weeks[0] ? sessionKey(week - 1, day) : null;
-  const prevLog = prevKey ? s.logs[prevKey] : undefined;
+  const prevRaw = prevKey ? s.logs[prevKey] : undefined;
+  // "Last week" only compares like with like: same gym version
+  const prevLog = prevRaw && (prevRaw.version ?? defaultVersion) === versionId ? prevRaw : undefined;
+
+  const switchGym = (v: VersionId) => {
+    if (v === versionId) return;
+    const logged = Object.values(log.sets).some((rows) => rows.some((r) => r.weight || r.reps || r.done)) || Object.keys(log.swaps ?? {}).length > 0 || !!log.result;
+    if (logged && !window.confirm("Switching gyms changes the exercises, so what you've logged in this session will be cleared. Switch anyway?")) return;
+    save({ ...log, version: v === defaultVersion ? undefined : v, sets: {}, swaps: {}, result: undefined });
+  };
 
   return (
     <div className="wrap narrow page">
@@ -60,9 +74,10 @@ export default function SessionPage() {
       </p>
       <h1>{dayTitle(version, day)}</h1>
       <p className="muted">
-        {version.name} · {dayEffort(version, day)}
+        {dayEffort(version, day)}
         {done && <span className="pill" style={{ marginLeft: 10 }}>Done</span>}
       </p>
+      <GymSwitch value={versionId} onChange={switchGym} label="Training at" note={versionId !== defaultVersion ? "Just this session. Your usual gym stays the same." : undefined} />
 
       {(day === 1 || day === 3) && (
         <Strength
@@ -150,7 +165,15 @@ function Strength({
               ex={ex}
               week={week}
               sets={log.sets[ex.order]}
-              prev={prevLog?.sets[ex.order]}
+              prev={(prevLog?.swaps?.[ex.order] ?? "") === (log.swaps?.[ex.order] ?? "") ? prevLog?.sets[ex.order] : undefined}
+              swapId={log.swaps?.[ex.order]}
+              onSwap={(id) => {
+                const swaps = { ...(log.swaps ?? {}) };
+                if (id) swaps[ex.order] = id; else delete swaps[ex.order];
+                const sets = { ...log.sets };
+                delete sets[ex.order]; // weights from a different exercise don't carry over
+                onChange({ ...log, swaps, sets });
+              }}
               restAfter={i === g.items.length - 1 ? lastRest(g.items) : ""}
               onChange={(sets) => onChange({ ...log, sets: { ...log.sets, [ex.order]: sets } })}
               onRest={onRest}
@@ -174,35 +197,53 @@ function ExerciseCard({
   sets,
   prev,
   restAfter,
+  swapId,
   onChange,
   onRest,
+  onSwap,
 }: {
   ex: StrengthExercise;
   week: number;
   sets?: SetLog[];
   prev?: SetLog[];
   restAfter: string;
+  swapId?: string;
   onChange: (s: SetLog[]) => void;
   onRest: (r: RestRequest) => void;
+  onSwap: (id: string | null) => void;
 }) {
+  const [swapsOpen, setSwapsOpen] = useState(false);
+  // Combos (floor press + push-up) swap on their first exercise
+  const original: Exercise | undefined = exerciseByName(ex.videoUrls?.[0]?.name ?? ex.name);
+  const swapped = swapId ? exerciseById(swapId) : undefined;
+  const current = swapped ?? original;
   const p = prescription(ex, week);
   const n = setCount(ex, week);
   const rows: SetLog[] = Array.from({ length: n }, (_, i) => sets?.[i] ?? { weight: "", reps: "", done: false });
   const set = (i: number, patch: Partial<SetLog>) => {
     const next = rows.map((r, j) => (j === i ? { ...r, ...patch } : r));
     onChange(next);
-    if (patch.done && restAfter) onRest({ label: ex.name, rest: restAfter });
+    if (patch.done && restAfter) onRest({ label: displayName, rest: restAfter });
   };
+  const displayName = swapped ? swapped.name : ex.name;
   const prevSummary = prev?.filter((x) => x.weight || x.reps).map((x) => `${x.weight || "-"} × ${x.reps || "-"}`).join(", ");
-  const videos = ex.videoUrls ?? (ex.videoUrl ? [{ name: ex.name, url: ex.videoUrl }] : []);
+  const videos = swapped
+    ? swapped.videoUrl ? [{ name: swapped.name, url: swapped.videoUrl }] : []
+    : ex.videoUrls ?? (ex.videoUrl ? [{ name: ex.name, url: ex.videoUrl }] : []);
 
   return (
     <article className="exercise">
       <div className="ex-head">
         <span className="ex-order">{ex.order}</span>
         <div>
-          <h3 className="ex-name">{ex.name}</h3>
-          {ex.note && <p className="small muted ex-note">{ex.note}</p>}
+          <h3 className="ex-name">{displayName}</h3>
+          {swapped && (
+            <p className="small muted ex-note">
+              Swapped from {ex.name} ·{" "}
+              <button type="button" className="link-btn" onClick={() => onSwap(null)}>Undo</button>
+            </p>
+          )}
+          {!swapped && ex.note && <p className="small muted ex-note">{ex.note}</p>}
         </div>
       </div>
       <dl className="ex-rx">
@@ -214,6 +255,19 @@ function ExerciseCard({
       {videos.map((v) => (
         <DemoButton key={v.url} url={v.url} name={v.name} />
       ))}
+      {current && (
+        <button type="button" className="demo-link swap-link" onClick={() => setSwapsOpen((o) => !o)} aria-expanded={swapsOpen}>
+          {swapsOpen ? "Hide swaps" : "Substitutions and swaps"}
+        </button>
+      )}
+      {swapsOpen && current && (
+        <SwapPanel
+          current={current}
+          original={swapped ? original : undefined}
+          onSwap={(picked) => { onSwap(picked && picked.id !== original?.id ? picked.id : null); setSwapsOpen(false); }}
+          onClose={() => setSwapsOpen(false)}
+        />
+      )}
       {prevSummary && <p className="small muted">Last week: {prevSummary}</p>}
       <table className="sets">
         <thead>

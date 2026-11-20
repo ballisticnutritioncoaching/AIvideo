@@ -7,7 +7,8 @@ export type Block =
   | { t: "steps"; items: { title: string; text: string }[] }
   | { t: "table"; head: string[]; rows: string[][] }
   | { t: "callout"; text: string; tone?: "blue" | "red"; title?: string }
-  | { t: "cards"; items: { title: string; text: string }[] };
+  | { t: "cards"; items: { title: string; text: string }[] }
+  | { t: "credit"; text: string };
 
 export interface Article {
   slug: string;
@@ -15,6 +16,8 @@ export interface Article {
   title: string;
   dek: string;
   body: Block[];
+  /** Pages with an interactive tool above the text */
+  interactive?: "grocery" | "swaps";
 }
 
 export const LIBRARY: Article[] = [
@@ -146,23 +149,11 @@ export const LIBRARY: Article[] = [
   },
   {
     slug: "swaps",
+    interactive: "swaps",
     group: "Training",
-    title: "Equipment swaps",
-    dek: "Same movement, same muscles, different equipment. Keep the sets, reps, tempo and rest the same as the exercise you're replacing.",
+    title: "Exercise swaps",
+    dek: "Search any exercise to see easier and harder versions, with demos. Same movement, same muscles: keep the sets, reps, tempo and rest the same.",
     body: [
-      { t: "table", head: ["Movement", "Functional fitness gym", "Commercial gym", "Minimalist home gym"], rows: [
-        ["Squat", "Back Squat, Front Box Squat", "Same as master", "Dumbbell Front Squat, 1-1/4 Dumbbell Goblet Squat"],
-        ["Hinge", "Kettlebell RDL, Barbell RDL", "Dumbbell RDL", "Dumbbell RDL, B-stance Dumbbell Glute Bridge"],
-        ["Vertical pull", "Lat Pull-down, Eccentric Pull-up, Weighted Eccentric Chin-up", "Tempo Pull-up", "Banded Lat Pull-down, Half-kneeling Band Lat Pull-down, Tempo Pull-up"],
-        ["Horizontal pull", "Ring/TRX Row, Half-kneeling Single-arm Cable Row, Chest-supported Dumbbell Row", "Barbell Inverted Row, supinated grip", "Three-point Dumbbell Row, Half-kneeling Single-arm Band Row, Dumbbell Bent-over Row"],
-        ["Horizontal push", "Alternating Dumbbell Bench Press, Dumbbell Bench Press, Barbell Bench Press", "Same as master", "Alternating Dumbbell Floor Press, Dumbbell Floor Press + Push-up combos"],
-        ["Vertical push", "Barbell Shoulder Press", "Same as master", "Tall-kneeling Arnold Press"],
-        ["Glutes", "Barbell Glute Bridge", "Tall-kneeling Zercher Good Morning", "Tall-kneeling Dumbbell Good Morning, Single-leg Dumbbell Glute Bridge"],
-        ["Single leg", "Front Foot Elevated Dumbbell Split Squat, Dumbbell Drop Lunge", "Same as master", "Dumbbell Reverse Lunge, Dumbbell Walking Lunge"],
-        ["Arms", "Incline Dumbbell Biceps Curl, Cable Triceps Push-down", "Same as master", "1-1/4 Dumbbell Biceps Curl, Banded Triceps Push-down"],
-        ["Shoulders", "Cable Face Pull, Prone Three-position Lateral Raise", "Same as master", "Band Face Pull, Three-position Bent-over Lateral Raise"],
-        ["Core", "Hanging Knee Raise, Half-kneeling Cable Rotation", "Same as master", "Alternating V-up, Half-kneeling Band Rotation"],
-      ] },
       { t: "h", text: "Conditioning swaps" },
       { t: "table", head: ["Distance", "Equals"], rows: [
         ["400 m run", "500 m row or 0.70/0.60 mile bike"],
@@ -194,7 +185,7 @@ export const LIBRARY: Article[] = [
         { title: "Shorten the range", text: "Squat to a box or bench, press from a slight deficit instead of a deep one, pull to a higher target." },
         { title: "Slow it down", text: "A slower lowering phase lets you use less weight and own the position." },
         { title: "Add support", text: "Chest-supported rows, supported single-leg RDLs, half-kneeling or tall-kneeling presses." },
-        { title: "Swap the exercise", text: "Use a swap from the equipment swaps table that trains the same movement." },
+        { title: "Swap the exercise", text: "Use an easier or different-equipment version from Exercise swaps that trains the same movement." },
         { title: "Skip it and get checked", text: "If it still hurts, leave it out and see a doctor or physical therapist." },
       ] },
       { t: "h", text: "Too easy or too hard?" },
@@ -240,7 +231,8 @@ export const LIBRARY: Article[] = [
     title: "800 grams",
     dek: "Eat at least 800 grams of fruits and vegetables a day, by weight. That's it. That's the rule.",
     body: [
-      { t: "p", text: "We borrowed this one from EC Synkowski and her 800 gram challenge, because it's the simplest nutrition rule we've ever seen work. You don't cut anything out. You add fruits and vegetables until you hit 800 grams, and then you eat whatever else you want." },
+      { t: "credit", text: "800 grams comes from EC Synkowski. She created the #800gChallenge, coined it, and coaches it today through OptimizeMe Nutrition. We use it in this program courtesy of her, because it's the simplest nutrition rule we've ever seen work." },
+      { t: "p", text: "Here's how EC's rule works. You don't cut anything out. You add fruits and vegetables until you hit 800 grams, and then you eat whatever else you want." },
       { t: "p", text: "Now, here's what happens when you actually do it. More fruits and vegetables means more fiber and more food on your plate. More food on your plate means you get full on fewer calories. Getting full on fewer calories means less snacking at night. And less snacking at night is what moves the scale." },
       { t: "h", text: "What counts" },
       { t: "list", items: [
@@ -269,7 +261,7 @@ export const LIBRARY: Article[] = [
   {
     slug: "macros",
     group: "Nutrition",
-    title: "Macros and lazy macros",
+    title: "Macros and Lazy Macros",
     dek: "Macros are the three nutrients that carry calories: protein, carbohydrates and fat.",
     body: [
       { t: "table", head: ["Macro", "Calories per gram", "What it does", "Where you find it"], rows: [
@@ -282,10 +274,11 @@ export const LIBRARY: Article[] = [
       { t: "p", text: "You don't have to track everything to get results. Pick the lowest level that's working, and only move up when you stop making progress." },
       { t: "cards", items: [
         { title: "Level 1: No tracking", text: "Build plates in the order on the quality page, hit 800 grams, get protein at every meal, eat the same meals on repeat. Plenty of people never need more than this." },
-        { title: "Level 2: Lazy macros", text: "Track 2 numbers: protein and calories. Hit your protein, stay at or under your calories, and let carbs and fat land wherever they land. It's about 90% of the result for a fraction of the effort." },
+        { title: "Level 2: Lazy Macros", text: "EC Synkowski's method. Track 2 numbers: protein and calories. Hit your protein, stay at or under your calories, and let carbs and fat land wherever they land. It's about 90% of the result for a fraction of the effort." },
         { title: "Level 3: Full macros", text: "Track protein, carbs and fat. Useful when you want more precision for a set period, or when your progress has stalled at Level 2." },
       ] },
-      { t: "h", text: "Why lazy macros work for parents" },
+      { t: "credit", text: "Lazy Macros is EC Synkowski's method. She created it, named it, and coaches it through OptimizeMe Nutrition. We teach it here courtesy of her." },
+      { t: "h", text: "Why Lazy Macros work for parents" },
       { t: "p", text: "Protein and calories are the 2 numbers that matter most for fat loss. Calories decide whether you lose weight. Protein decides how much of that weight comes from fat instead of muscle, and it keeps you full while you do it." },
       { t: "p", text: "Everything else is fine-tuning. When you're juggling work, kids and practice schedules, 2 numbers you actually hit beat 5 numbers you give up on by Wednesday." },
       { t: "callout", title: "How to track:", text: "use any free food-tracking app. Log as you go, not at the end of the day. Save your repeat meals so logging takes seconds." },
@@ -323,18 +316,11 @@ export const LIBRARY: Article[] = [
   },
   {
     slug: "grocery-list",
+    interactive: "grocery",
     group: "Nutrition",
     title: "Grocery list",
     dek: "Healthy eating isn't about where you shop. You can do this at Aldi, Walmart or anywhere else.",
     body: [
-      { t: "cards", items: [
-        { title: "Protein", text: "Chicken breasts or thighs · 90/10 or leaner ground beef · Ground turkey · Rotisserie chicken · Eggs and liquid egg whites · Plain Greek yogurt · Cottage cheese · Canned tuna or chicken · Frozen shrimp or fish · Deli turkey or chicken · Protein powder · String cheese" },
-        { title: "Fruits and vegetables", text: "Steam bag veggies · Frozen broccoli, green beans, peppers · Bagged salad kits · Baby carrots, snap peas, cucumbers · Bell peppers and onions · Frozen spinach · Bananas, apples, clementines, grapes · Frozen berries · Fresh berries in season · Fruit cups or pouches" },
-        { title: "Starches", text: "Microwave rice cups or a bag of rice · Potatoes and sweet potatoes · Oats · Whole-grain bread · Tortillas and wraps · Pasta · Beans · Rice cakes" },
-        { title: "Fats and extras", text: "Olive oil and cooking spray · Avocados · Almonds, cashews · Peanut butter · Shredded cheese · Light dressings" },
-        { title: "Flavor", text: "Salsa · Hot sauce · Mustard · Low-sugar BBQ sauce · Seasoning blends · Soy sauce or teriyaki" },
-        { title: "Car and desk stash", text: "Protein bars · Ready-to-drink protein shakes · Beef or turkey jerky · Single-serve nuts · Fruit that doesn't need cutting" },
-      ] },
       { t: "h", text: "Where to save and where to spend" },
       { t: "p", text: "Save: frozen fruits and vegetables, store-brand everything, and cheap staples like eggs, oats, rice, potatoes, bananas and beans." },
       { t: "p", text: "Spend a little: protein, bought in bulk and frozen, and anything that saves you on hard nights, like rotisserie chicken. Skip: superfood powders, wellness drinks, and anything that promises to detox you." },
@@ -398,3 +384,13 @@ export const LIBRARY: Article[] = [
 ];
 
 export const getArticle = (slug: string) => LIBRARY.find((a) => a.slug === slug);
+
+/** Grocery list from the guide, used by the interactive checklist. */
+export const GROCERY: { category: string; items: string[] }[] = [
+  { category: "Protein", items: ["Chicken breasts or thighs", "90/10 or leaner ground beef", "Ground turkey", "Rotisserie chicken", "Eggs and liquid egg whites", "Plain Greek yogurt", "Cottage cheese", "Canned tuna or chicken", "Frozen shrimp or fish", "Deli turkey or chicken", "Protein powder", "String cheese"] },
+  { category: "Fruits and vegetables", items: ["Steam bag veggies", "Frozen broccoli, green beans, peppers", "Bagged salad kits", "Baby carrots, snap peas, cucumbers", "Bell peppers and onions", "Frozen spinach", "Bananas, apples, clementines, grapes", "Frozen berries", "Fresh berries in season", "Fruit cups or pouches"] },
+  { category: "Starches", items: ["Microwave rice cups or a bag of rice", "Potatoes and sweet potatoes", "Oats", "Whole-grain bread", "Tortillas and wraps", "Pasta", "Beans", "Rice cakes"] },
+  { category: "Fats and extras", items: ["Olive oil and cooking spray", "Avocados", "Almonds, cashews", "Peanut butter", "Shredded cheese", "Light dressings"] },
+  { category: "Flavor", items: ["Salsa", "Hot sauce", "Mustard", "Low-sugar BBQ sauce", "Seasoning blends", "Soy sauce or teriyaki"] },
+  { category: "Car and desk stash", items: ["Protein bars", "Ready-to-drink protein shakes", "Beef or turkey jerky", "Single-serve nuts", "Fruit that doesn't need cutting"] },
+];

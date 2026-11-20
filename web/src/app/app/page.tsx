@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { CoachCard } from "@/components/CoachCard";
+import { GymSwitch } from "@/components/GymSwitch";
 import { Milestone } from "@/components/Milestone";
+import type { VersionId } from "@/data/types";
 import {
   blockForWeek,
   completedCount,
@@ -18,7 +20,7 @@ import {
   TOTAL_SESSIONS,
   weekStreak,
 } from "@/lib/program";
-import { useAppState } from "@/lib/store";
+import { sessionKey, update, useAppState } from "@/lib/store";
 
 const fmt = (d: Date) => d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 
@@ -51,7 +53,20 @@ export default function Today() {
     );
   }
 
-  const block = blockForWeek(version, next.week);
+  const nextKey = sessionKey(next.week, next.day);
+  const nextLog = s.logs[nextKey];
+  const nextVersionId: VersionId = nextLog?.version ?? profile.version;
+  const nextVersion = getVersion(nextVersionId);
+  const switchNext = (v: VersionId) => {
+    if (v === nextVersionId) return;
+    const logged = nextLog && (Object.values(nextLog.sets).some((rows) => rows.some((r) => r.weight || r.reps || r.done)) || !!nextLog.result);
+    if (logged && !window.confirm("You've started logging this session. Switching gyms clears it. Switch anyway?")) return;
+    update((st) => ({
+      ...st,
+      logs: { ...st.logs, [nextKey]: { ...(nextLog ?? {}), sets: {}, swaps: {}, result: undefined, version: v === profile.version ? undefined : v } },
+    }));
+  };
+  const block = blockForWeek(nextVersion, next.week);
   const date = suggestedDate(profile.startDate, profile.days, next.index);
   const pct = Math.round((done / TOTAL_SESSIONS) * 100);
 
@@ -61,7 +76,7 @@ export default function Today() {
         <section className="stack">
           <div>
             <p className="label">
-              {version.short} · Block {block.block} · Week {next.week}
+              Block {block.block} · Week {next.week}
             </p>
             <h1>{first ? `Ready when you are, ${first}.` : "Ready when you are."}</h1>
           </div>
@@ -72,12 +87,19 @@ export default function Today() {
               {date && <span className="small next-date">Planned for {fmt(date)}</span>}
             </div>
             <p className="display next-day">Day {next.day}</p>
-            <h2>{dayTitle(version, next.day)}</h2>
+            <h2>{dayTitle(nextVersion, next.day)}</h2>
             <p className="next-meta">
-              {dayEffort(version, next.day)} · {dayLength(next.day)}
+              {dayEffort(nextVersion, next.day)} · {dayLength(next.day)} · {nextVersion.short}
             </p>
             <span className="btn primary block">Start session</span>
           </Link>
+
+          <GymSwitch
+            value={nextVersionId}
+            onChange={switchNext}
+            label="Where are you training next?"
+            note={nextVersionId !== profile.version ? "Just for this session. Change your usual gym in Settings." : "Traveling or splitting time between a gym and home? Switch any session."}
+          />
 
           <div className="card">
             <div className="row between">
