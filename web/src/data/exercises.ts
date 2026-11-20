@@ -175,7 +175,8 @@ function equipmentOf(name: string): string {
   const n = name.toLowerCase();
   if (n.includes("barbell") || n.includes("back squat") || n.includes("front box") || n.includes("zercher")) return "Barbell";
   if (n.includes("cable") || n === "lat pull-down") return "Cable";
-  if (n.includes("band")) return "Band";
+  if (n.includes("band") || n.includes("pallof")) return "Band";
+  if (n.includes("pull-through")) return "Dumbbells";
   if (n.includes("ring") || n.includes("trx")) return "Rings/TRX";
   if (n.includes("kettlebell")) return "Kettlebell";
   if (n.includes("dumbbell") || n.includes("zottman") || n.includes("arnold") || n.includes("lateral raise") || n.includes("farmer")) return "Dumbbells";
@@ -222,8 +223,17 @@ export const EXERCISES: Exercise[] = build();
  * 1) The program's own: the exercise each gym version uses in the same slot (block, day, order).
  * 2) A few equipment-only pairs for gyms without a rack or bench.
  */
-const MANUAL_EQUIVALENTS: [string, string][] = [
+/** Direct counterparts: the same movement with different equipment. Always the first swap offered. */
+const COUNTERPARTS: [string, string][] = [
+  ["Barbell Bench Press", "Dumbbell Bench Press"],
+  ["Barbell Shoulder Press", "Dumbbell Shoulder Press"],
+  ["Barbell RDL", "Dumbbell RDL"],
+  ["Barbell Glute Bridge", "Dumbbell Glute Bridge"],
   ["Back Squat", "Dumbbell Front Squat"],
+  ["Cable Face Pull", "Band Face Pull"],
+  ["Half-kneeling Cable Rotation", "Half-kneeling Band Rotation"],
+  ["Cable Triceps Push-down", "Banded Triceps Push-down"],
+  ["Half-kneeling Single-arm Cable Row", "Half-kneeling Single-arm Band Row"],
   ["Deficit Push-up", "Dumbbell Bench Press"],
   ["Deficit Push-up", "Dumbbell Floor Press"],
 ];
@@ -248,10 +258,15 @@ function buildEquivalents(): Map<string, Set<string>> {
     eq.set(c, (eq.get(c) ?? new Set()).add(a));
   };
   for (const names of slots.values()) for (const a of names) for (const c of names) link(a, c);
-  for (const [a, c] of MANUAL_EQUIVALENTS) link(a, c);
   return eq;
 }
+/** The program's own: the exercise each gym version uses in the same slot */
 const EQUIVALENTS = buildEquivalents();
+const COUNTERPART_MAP = new Map<string, Set<string>>();
+for (const [a, c] of COUNTERPARTS) {
+  COUNTERPART_MAP.set(a, (COUNTERPART_MAP.get(a) ?? new Set()).add(c));
+  COUNTERPART_MAP.set(c, (COUNTERPART_MAP.get(c) ?? new Set()).add(a));
+}
 
 /** Coach overrides: options never offered as a swap for a given exercise. */
 const SWAP_EXCLUDE: Record<string, string[]> = {
@@ -264,19 +279,23 @@ export const exerciseById = (id: string) => byId.get(id);
 export const exerciseByName = (name: string) => byName.get(name.toLowerCase());
 
 /**
- * Swap options for an exercise: easier versions (regressions, closest first) and same-level
- * alternatives with different equipment for a similar stimulus. Swaps never go harder.
+ * Swap options for an exercise, never harder by the ladder.
+ * alternatives (same stimulus): direct counterparts first, then the same ladder level, then program
+ *   equivalents within one level.
+ * easier (regressions): remaining program equivalents first, then closest level first.
  */
 export function optionsFor(ex: Exercise) {
   const excluded = new Set(SWAP_EXCLUDE[ex.name] ?? []);
-  const same = EXERCISES.filter((e) => e.pattern === ex.pattern && e.id !== ex.id && !excluded.has(e.name));
-  // Same level, plus the program's equivalents that aren't harder by the ladder
-  const equivalentNames = EQUIVALENTS.get(ex.name) ?? new Set<string>();
-  const alternatives = same
-    .filter((e) => e.level === ex.level || (equivalentNames.has(e.name) && e.level <= ex.level))
-    .sort((a, b) => b.level - a.level);
+  const pool = EXERCISES.filter((e) => e.pattern === ex.pattern && e.id !== ex.id && !excluded.has(e.name) && e.level <= ex.level);
+  const counterparts = COUNTERPART_MAP.get(ex.name) ?? new Set<string>();
+  const programEq = EQUIVALENTS.get(ex.name) ?? new Set<string>();
+  const rank = (e: Exercise) =>
+    counterparts.has(e.name) ? 0 : e.level === ex.level ? 1 : programEq.has(e.name) && ex.level - e.level <= 1 ? 2 : -1;
+  const alternatives = pool.filter((e) => rank(e) >= 0).sort((a, b) => rank(a) - rank(b));
   const altIds = new Set(alternatives.map((e) => e.id));
-  const easier = same.filter((e) => e.level < ex.level && !altIds.has(e.id)).sort((a, b) => b.level - a.level);
+  const easier = pool
+    .filter((e) => !altIds.has(e.id))
+    .sort((a, b) => Number(programEq.has(b.name)) - Number(programEq.has(a.name)) || b.level - a.level);
   return { easier, alternatives };
 }
 
