@@ -9,7 +9,7 @@ export function CoachCard({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <p className="small">
           {CONFIG.coachingName} is our 1:1 nutrition and training coaching for parents of little ones. One coach, a
-          weekly video check-in and messaging 6 days a week. It&apos;s $600 a month for the first 4 months.
+          weekly video check-in and messaging 6 days a week.
         </p>
       )}
       <a className="btn small" href={CONFIG.bookingUrl} target="_blank" rel="noopener">

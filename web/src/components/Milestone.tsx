@@ -37,8 +37,7 @@ export function Milestone({ week }: { week: number }) {
           <p className="small" style={{ marginBottom: 12 }}>
             Want a coach who&apos;s a parent too? {CONFIG.coachingName} is 1:1 coaching with one coach, a weekly video
             check-in and messaging 6 days a week. In your first 16 weeks, you&apos;ll build a routine that holds up when
-            parent life gets messy. Many clients who stay with it lose 10-20 lbs over 6-9 months. It&apos;s $600 a
-            month for the first 4 months.
+            parent life gets messy. Many clients who stay with it lose 10-20 lbs over 6-9 months.
           </p>
           <a className="btn primary block" href={CONFIG.bookingUrl} target="_blank" rel="noopener" onClick={close}>
             Book a free discovery call
